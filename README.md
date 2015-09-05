@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/mrsmn/ares/master/doc/ares.jpg" height=85 alt="ares" title="ares">
+<img src="https://raw.githubusercontent.com/mrsmn/ares/master/doc/ares.png" height=85 alt="ares" title="ares">
 
 [![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)   [![Downloads](http://img.shields.io/pypi/dm/ares.svg)](https://pypi.python.org/pypi/ares/)
 
