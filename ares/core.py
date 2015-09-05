@@ -13,6 +13,8 @@ class CVESearch(object):
 		around cve.circl.lu (github.com/mrsmn/ares)'))
 	
 	def __urljoin(self, *args):
+		""" Internal urljoin function because urlparse.urljoin sucks. """
+		
 		return "/".join(map(lambda x: str(x).rstrip('/'), args))
 
 	def browse(self, query=None):

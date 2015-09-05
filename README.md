@@ -16,8 +16,49 @@ or install from PyPi
 
 ## Documentation:
 
+- **GET /api/browse/**
+- **GET /api/browse/<vendor>**
+
 ```
-coming soon...
+>>> from ares import CVESearch
+>>> cve = CVESearch()
+>>> cve.browse(<vendor>)
+```
+
+- **GET /api/search/<vendor>/<product>**
+
+```
+>>> cve.search('microsoft/office')
+```
+
+- **GET /api/cveid/<cveid>**
+
+```
+>>> cve.id('CVE-2014-0160')
+```
+
+- **GET /api/last**
+
+```
+>>> cve.last()
+```
+
+- **GET /api/cpe2.2/<cpe>**
+
+```
+>>> cve.cpe22('cpe:2.3:a:microsoft:office:2011:-:mac')
+```
+
+- **GET /api/cpe2.3/<cpe>**
+
+```
+>>> cve.cpe23('cpe:/a:microsoft:office:2011::mac')
+```
+
+- **GET /api/cvefor/<cpe>**
+
+```
+>>> cve.cvefor('cpe:/a:microsoft:office:2011::mac')
 ```
 
 ## License:
