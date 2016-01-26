@@ -16,48 +16,48 @@ or install from PyPi
 
 ## Documentation:
 
-- **GET /api/browse/**
-- **GET /api/browse/vendor**
+- **`GET /api/browse/`**
+- **`GET /api/browse/vendor`**
 
-```
+```python
 >>> from ares import CVESearch
 >>> cve = CVESearch()
 >>> cve.browse(<vendor>)
 ```
 
-- **GET /api/search/vendor/product**
+- **`GET /api/search/vendor/product`**
 
-```
+```python
 >>> cve.search('microsoft/office')
 ```
 
-- **GET /api/cveid/cveid**
+- **`GET /api/cveid/cveid`**
 
-```
+```python
 >>> cve.id('CVE-2014-0160')
 ```
 
-- **GET /api/last**
+- **`GET /api/last`**
 
-```
+```python
 >>> cve.last()
 ```
 
-- **GET /api/cpe2.2/cpe**
+- **`GET /api/cpe2.2/cpe`**
 
-```
+```python
 >>> cve.cpe22('cpe:2.3:a:microsoft:office:2011:-:mac')
 ```
 
-- **GET /api/cpe2.3/cpe**
+- **`GET /api/cpe2.3/cpe`**
 
-```
+```python
 >>> cve.cpe23('cpe:/a:microsoft:office:2011::mac')
 ```
 
-- **GET /api/cvefor/cpe**
+- **`GET /api/cvefor/cpe`**
 
-```
+```python
 >>> cve.cvefor('cpe:/a:microsoft:office:2011::mac')
 ```
 
@@ -65,7 +65,7 @@ or install from PyPi
 
 ```
     Apache v2.0 License
-    Copyright 2015 Martin Simon
+    Copyright 2015-2016 Martin Simon
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
