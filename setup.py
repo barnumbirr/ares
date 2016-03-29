@@ -5,7 +5,7 @@ from distutils.core import setup
 
 setup(
     name='ares',
-    version='0.1.1',
+    version='0.2',
     url='https://github.com/mrsmn/ares',
     download_url='https://github.com/mrsmn/ares/archive/master.zip',
     author='Martin Simon',

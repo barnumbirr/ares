@@ -43,6 +43,12 @@ or install from PyPi
 >>> cve.last()
 ```
 
+- **`GET /api/dbInfo`**
+
+```python
+>>> cve.dbinfo()
+```
+
 - **`GET /api/cpe2.2/cpe`**
 
 ```python
