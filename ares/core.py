@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import urllib2
+try:
+	from urlparse import urljoin
+except ImportError:
+	from urllib.parse import urljoin
+try:
+	import urllib.request as urllib2
+except ImportError:
+	import urllib2
 
 class CVESearch(object):
 

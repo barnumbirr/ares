@@ -1,6 +1,6 @@
 <h1><img src="https://raw.githubusercontent.com/mrsmn/ares/master/doc/ares.png" height=85 alt="ares" title="ares">ares</h1>
 
-[![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)   [![Downloads](http://img.shields.io/pypi/dm/ares.svg)](https://pypi.python.org/pypi/ares/)
+[![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)
 
 **ares** is an APACHE licensed library written in Python providing an easy to use wrapper around https://cve.circl.lu.
 
@@ -71,7 +71,7 @@ or install from PyPi
 
 ```
     Apache v2.0 License
-    Copyright 2015-2016 Martin Simon
+    Copyright 2015-2017 Martin Simon
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
