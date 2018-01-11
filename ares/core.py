@@ -5,19 +5,14 @@ try:
 	from urlparse import urljoin
 except ImportError:
 	from urllib.parse import urljoin
-try:
-	import urllib.request as urllib2
-except ImportError:
-	import urllib2
+
+import json
+import requests as r
 
 class CVESearch(object):
 
 	def __init__(self, base_url='https://cve.circl.lu/api/'):
 		self.base_url = base_url
-		self.opener = urllib2.build_opener()
-		self.opener.addheaders.append(('Content-Type', 'application/json'))
-		self.opener.addheaders.append(('User-agent', 'ares - python wrapper \
-		around cve.circl.lu (github.com/mrsmn/ares)'))
 
 	def _urljoin(self, *args):
 		""" Internal urljoin function because urlparse.urljoin sucks """
@@ -26,11 +21,12 @@ class CVESearch(object):
 	def _http_get(self, api_call, query):
 		url = self._urljoin(self.base_url, api_call)
 		if query == None:
-			response = self.opener.open(url).read()
+			response = r.get(url)
 		else:
 			response_url = self._urljoin(url, query)
-			response = self.opener.open(response_url).read()
-		return response
+			response = r.get(response_url)
+		
+		return response.json()
 
 	def browse(self, param=None):
 		""" browse() returns a dict containing all the vendors
