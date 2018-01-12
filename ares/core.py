@@ -1,84 +1,72 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-try:
-	from urlparse import urljoin
-except ImportError:
-	from urllib.parse import urljoin
-
 import json
-import requests as r
+import requests
+from requests.compat import urljoin
 
 class CVESearch(object):
 
-	def __init__(self, base_url='https://cve.circl.lu/api/'):
+	_session = None
+	__DEFAULT_BASE_URL = 'https://cve.circl.lu/api/'
+	__DEFAULT_TIMEOUT = 120
+
+	def __init__(self, base_url = __DEFAULT_BASE_URL, request_timeout = __DEFAULT_TIMEOUT):
 		self.base_url = base_url
+		self.request_timeout = request_timeout
 
-	def _urljoin(self, *args):
-		""" Internal urljoin function because urlparse.urljoin sucks """
-		return "/".join(map(lambda x: str(x).rstrip('/'), args))
+	@property
+	def session(self):
+		if not self._session:
+			self._session = requests.Session()
+			self._session.headers.update({'Content-Type': 'application/json'})
+			self._session.headers.update({'User-agent': 'ares - python wrapper \
+		around cve.circl.lu (github.com/mrsmn/ares)'})
+		return self._session
 
-	def _http_get(self, api_call, query):
-		url = self._urljoin(self.base_url, api_call)
-		if query == None:
-			response = r.get(url)
-		else:
-			response_url = self._urljoin(url, query)
-			response = r.get(response_url)
-		
-		return response.json()
+	def __request(self, endpoint, query):
+		response_object = self.session.get(requests.compat.urljoin(self.base_url + endpoint, query),
+		                                   timeout = self.request_timeout)
+
+		if response_object.status_code != 200:
+			raise Exception('An error occured, please try again.')
+		try:
+			response = json.loads(response_object.text)
+		except requests.exceptions.RequestException as e:
+			return e
+
+		return response
 
 	def browse(self, param=None):
 		""" browse() returns a dict containing all the vendors
 			browse(vendor) returns a dict containing all the products
 			associated to a vendor
 		"""
-		data = self._http_get('browse/', query=param)
-		return data
+		response = self.__request('browse/', query=param)
+		return response
 
 	def search(self, param):
 		""" search() returns a dict containing all the vulnerabilities per
 			vendor and a specific product
 		"""
-		data = self._http_get('search/', query=param)
-		return data
+		response = self.__request('search/', query=param)
+		return response
 
 	def id(self, param):
 		""" id() returns a dict containing a specific CVE ID """
-		data = self._http_get('cve/', query=param)
-		return data
+		response = self.__request('cve/', query=param)
+		return response
 
 	def last(self):
 		""" last() returns a dict containing the last 30 CVEs including CAPEC,
 			CWE and CPE expansions
 		"""
-		data = self._http_get('last/', query=None)
-		return data
+		response = self.__request('last/', query=None)
+		return response
 
 	def dbinfo(self):
 		""" dbinfo() returns a dict containing more information about
 			the current databases in use and when it was updated
 		"""
-		data = self._http_get('dbInfo/', query=None)
-		return data
-
-	def cpe22(self, param):
-		""" cpe22() returns a string containing the cpe2.2 ID of a
-			cpe2.3 input
-		"""
-		data = self._http_get('cpe2.2/', query=param)
-		return data
-
-	def cpe23(self, param):
-		""" cpe23() returns a string containing the cpe2.3 ID of a
-			cpe2.2 input
-		"""
-		data = self._http_get('cpe2.3/', query=param)
-		return data
-
-	def cvefor(self, param):
-		""" cvefor() returns a dict containing the CVE's for a given
-			CPE ID
-		"""
-		data = self._http_get('cvefor/', query=param)
-		return data
+		response = self.__request('dbInfo', query=None)
+		return response

@@ -3,6 +3,7 @@
 [![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)
 
 **ares** is an APACHE licensed library written in Python providing an easy to use wrapper around https://cve.circl.lu.
+This library has been tested with Python 2.7.x and Python 3.6.x.
 
 ## Installation:
 
@@ -49,41 +50,22 @@ or install from PyPi
 >>> cve.dbinfo()
 ```
 
-- **`GET /api/cpe2.2/cpe`**
-
-```python
->>> cve.cpe22('cpe:2.3:a:microsoft:office:2011:-:mac')
-```
-
-- **`GET /api/cpe2.3/cpe`**
-
-```python
->>> cve.cpe23('cpe:/a:microsoft:office:2011::mac')
-```
-
-- **`GET /api/cvefor/cpe`**
-
-```python
->>> cve.cvefor('cpe:/a:microsoft:office:2011::mac')
-```
-
 ## License:
 
 ```
-    Apache v2.0 License
-    Copyright 2015-2017 Martin Simon
+Copyright 2014-2018 Martin Simon
 
-     Licensed under the Apache License, Version 2.0 (the "License");
-     you may not use this file except in compliance with the License.
-     You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-         http://www.apache.org/licenses/LICENSE-2.0
+   http://www.apache.org/licenses/LICENSE-2.0
 
-     Unless required by applicable law or agreed to in writing, software
-     distributed under the License is distributed on an "AS IS" BASIS,
-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     See the License for the specific language governing permissions and
-     limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
 ```
 

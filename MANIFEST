@@ -1,5 +1,6 @@
-COPYING
+LICENSE
 setup.py
 README.md
+requirements.txt
 ares/core.py
 ares/__init__.py
