@@ -28,11 +28,9 @@ class CVESearch(object):
 		response_object = self.session.get(requests.compat.urljoin(self.base_url + endpoint, query),
 		                                   timeout = self.request_timeout)
 
-		if response_object.status_code != 200:
-			raise Exception('An error occured, please try again.')
 		try:
 			response = json.loads(response_object.text)
-		except requests.exceptions.RequestException as e:
+		except Exception as e:
 			return e
 
 		return response

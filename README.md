@@ -1,4 +1,4 @@
-<h1><img src="https://raw.githubusercontent.com/mrsmn/ares/master/doc/ares.png" height=85 alt="ares" title="ares">ares</h1>
+# ![icon](https://raw.githubusercontent.com/barnumbirr/ares/master/doc/ares.png) ares
 
 [![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)
 
@@ -74,7 +74,7 @@ limitations under the License.
 If you feel like buying me a coffee (or a beer?), donations are welcome:
 
 ```
-WDC : WbcWJzVD8yXt3yLnnkCZtwQo4YgSUdELkj
-HBN : F2Zs4igv8r4oJJzh4sh4bGmeqoUxLQHPki
-DOGE: DRBkryyau5CMxpBzVmrBAjK6dVdMZSBsuS
+BTC : 1BNFXHPNRtg7LrLUmQWwPUwzoicUi3uP8Q
+ETH : 0xd061B7dD794F6EB357bf132172ce06D1B0E5b97B
+BCH : qpcmv8vstulfhgdf29fd8sf2g769sszscvaktty2rv
 ```
