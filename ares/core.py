@@ -1,70 +1,59 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
+from urllib.parse import urljoin
+from typing import Union, Optional, Any
 import requests
-from requests.compat import urljoin
 
-class CVESearch(object):
+class CVESearch:
 
-	_session = None
-	__DEFAULT_BASE_URL = 'https://cve.circl.lu/api/'
-	__DEFAULT_TIMEOUT = 120
+    _DEFAULT_BASE_URL = 'https://cve.circl.lu/api/'
+    _DEFAULT_TIMEOUT = 120
 
-	def __init__(self, base_url = __DEFAULT_BASE_URL, request_timeout = __DEFAULT_TIMEOUT):
-		self.base_url = base_url
-		self.request_timeout = request_timeout
+    def __init__(self, base_url: str = _DEFAULT_BASE_URL,
+                 request_timeout: int = _DEFAULT_TIMEOUT) -> None:
+        self.base_url = base_url
+        self.request_timeout = request_timeout
+        self.session = self._get_session()
 
-	@property
-	def session(self):
-		if not self._session:
-			self._session = requests.Session()
-			self._session.headers.update({'Content-Type': 'application/json'})
-			self._session.headers.update({'User-agent': 'ares - python wrapper \
-		around cve.circl.lu (github.com/mrsmn/ares)'})
-		return self._session
+    @staticmethod
+    def _get_session() -> requests.Session:
+        session = requests.Session()
+        user_agent = 'ares - python wrapper around cve.circl.lu (github.com/mrsmn/ares)'
+        session.headers.update({'Content-Type': 'application/json'})
+        session.headers.update({'User-agent': user_agent})
+        return session
 
-	def __request(self, endpoint, query):
-		response_object = self.session.get(requests.compat.urljoin(self.base_url + endpoint, query),
-		                                   timeout = self.request_timeout)
+    def _request(self, endpoint: str, query: Optional[str]) -> Any:
+        response = self.session.get(urljoin(self.base_url + endpoint, query),
+                                    timeout=self.request_timeout)
+        response.raise_for_status()
+        return response.json()
 
-		try:
-			response = json.loads(response_object.text)
-		except Exception as e:
-			return e
+    def browse(self, param=None) -> dict:
+        """ browse() returns a dict containing all the vendors
+            browse(vendor) returns a dict containing all the products
+            associated to a vendor
+        """
+        return self._request('browse/', query=param)
 
-		return response
+    def search(self, param: str) -> Union[list, dict]:
+        """ search(vendor/product) returns a list containing all the
+            vulnerabilities per product, search(vendor) returns a dict of lists
+        """
+        return self._request('search/', query=param)
 
-	def browse(self, param=None):
-		""" browse() returns a dict containing all the vendors
-			browse(vendor) returns a dict containing all the products
-			associated to a vendor
-		"""
-		response = self.__request('browse/', query=param)
-		return response
+    def id(self, param: str) -> dict:
+        """ id(cve) returns a dict containing a specific CVE ID """
+        return self._request('cve/', query=param)
 
-	def search(self, param):
-		""" search() returns a dict containing all the vulnerabilities per
-			vendor and a specific product
-		"""
-		response = self.__request('search/', query=param)
-		return response
+    def last(self) -> list:
+        """ last() returns a list containing the last 30 CVEs including CAPEC,
+            CWE and CPE expansions
+        """
+        return self._request('last/', query=None)
 
-	def id(self, param):
-		""" id() returns a dict containing a specific CVE ID """
-		response = self.__request('cve/', query=param)
-		return response
-
-	def last(self):
-		""" last() returns a dict containing the last 30 CVEs including CAPEC,
-			CWE and CPE expansions
-		"""
-		response = self.__request('last/', query=None)
-		return response
-
-	def dbinfo(self):
-		""" dbinfo() returns a dict containing more information about
-			the current databases in use and when it was updated
-		"""
-		response = self.__request('dbInfo', query=None)
-		return response
+    def dbinfo(self) -> dict:
+        """ dbinfo() returns a dict containing more information about
+            the current databases in use and when it was updated
+        """
+        return self._request('dbInfo', query=None)

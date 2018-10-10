@@ -3,7 +3,7 @@
 [![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)
 
 **ares** is an APACHE licensed library written in Python providing an easy to use wrapper around https://cve.circl.lu.
-This library has been tested with Python 2.7.x and Python 3.6.x.
+This library has been tested with Python 3.7.
 
 ## Installation:
 
