@@ -1,10 +1,11 @@
-# -*- coding: utf-8 -*-
+"""Ares wrapper around cve.circl.lu"""
 
 from urllib.parse import urljoin
 from typing import Union, Optional, Any
 import requests
 
 class CVESearch:
+    """CVESearch class for querying cve.circl.lu API"""
 
     _DEFAULT_BASE_URL = 'https://cve.circl.lu/api/'
     _DEFAULT_TIMEOUT = 120
@@ -29,7 +30,7 @@ class CVESearch:
         response.raise_for_status()
         return response.json()
 
-    def browse(self, param=None) -> dict:
+    def browse(self, param: str = None) -> dict:
         """ browse() returns a dict containing all the vendors
             browse(vendor) returns a dict containing all the products
             associated to a vendor
@@ -42,6 +43,7 @@ class CVESearch:
         """
         return self._request('search/', query=param)
 
+    # pylint: disable=invalid-name
     def id(self, param: str) -> dict:
         """ id(cve) returns a dict containing a specific CVE ID """
         return self._request('cve/', query=param)
