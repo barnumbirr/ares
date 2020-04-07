@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import json
 import requests
 
 class CVESearch(object):
@@ -13,74 +12,58 @@ class CVESearch(object):
 	def __init__(self, base_url = __DEFAULT_BASE_URL, request_timeout = __DEFAULT_TIMEOUT):
 		self.base_url = base_url
 		self.request_timeout = request_timeout
+		self.session = self._create_session()
 
-	@property
-	def session(self):
-		if not self._session:
-			self._session = requests.Session()
-			self._session.headers.update({'Content-Type': 'application/json'})
-			self._session.headers.update({'User-agent': 'ares - python wrapper \
-		around cve.circl.lu (github.com/barnumbirr/ares)'})
-		return self._session
+	@staticmethod
+	def _create_session():
+		session = requests.Session()
+		user_agent = 'ares - python wrapper around cve.circl.lu (github.com/barnumbirr/ares)'
+		session.headers.update({'Content-Type': 'application/json'})
+		session.headers.update({'User-agent': user_agent})
+		return session
 
 	def __request(self, endpoint, query):
 		# There is probably a more elegant way to do this ¯\_(ツ)_/¯
 		if query:
-			response_object = self.session.get(requests.compat.urljoin(self.base_url, endpoint + query),
-		                                   timeout = self.request_timeout)
+			response = self.session.get(requests.compat.urljoin(self.base_url, endpoint + query),
+		                                timeout = self.request_timeout)
 		else:
-			response_object = self.session.get(requests.compat.urljoin(self.base_url, endpoint),
-		                                   timeout = self.request_timeout)
+			response = self.session.get(requests.compat.urljoin(self.base_url, endpoint),
+		                                timeout = self.request_timeout)
 
-		try:
-			response = json.loads(response_object.text)
-		except Exception as e:
-			return e
-
-		return response
+		response.raise_for_status()
+		return response.json()
 
 	def browse(self, param=None):
-		response = self.__request('browse/', query=param)
-		return response
+		return self.__request('browse/', query=param)
 
 	def capec(self, param):
-		response = self.__request('capec/', query=param)
-		return response
+		return self.__request('capec/', query=param)
 
 	# def cpe22(self, param):
-	# 	response = self.__request('cpe2.2/', query=param)
-	# 	return response
-
+	# 	return self.__request('cpe2.2/', query=param)
 
 	# def cpe23(self, param):
-	# 	response = self.__request('cpe2.3/', query=param)
-	# 	return response
-
-	def cve(self, param):
-		response = self.__request('cve/', query=param)
-		return response
+	# 	return self.__request('cpe2.3/', query=param)
 
 	# def cvefor(self, param):
-	# 	response = self.__request('cvefor/', query=param)
-	# 	return response
+	# 	return self.__request('cvefor/', query=param)
 
 	def cwe(self):
 		""" Outputs a list of all CWEs (Common Weakness Enumeration). """
-		response = self.__request('cwe', query=None)
-		return response
+		return self.__request('cwe', query=None)
 
 	def dbinfo(self):
-		response = self.__request('dbInfo', query=None)
-		return response
+		return self.__request('dbInfo', query=None)
 
-	def last(self, param):
-		response = self.__request('last/', query=param)
-		return response
+	def id(self, param):
+		return self.__request('cve/', query=param)
 
-	def link(self, param):
-		response = self.__request('link/', query=param)
-		return response
+	def last(self, param=None):
+		return self.__request('last/', query=param)
+
+	# def link(self, param):
+	# 	return self.__request('link/', query=param)
 
 	# def search(self, param):
-	# 	response = self.__request('search/', query=param)
-	# 	return response
+	# 	return self.__request('search/', query=param)

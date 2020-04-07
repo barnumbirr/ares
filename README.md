@@ -112,7 +112,7 @@ CWE (Common Weakness Enumeration), ... as well as additional information (RedHat
 | cveid               | CVE number            | `CVE-2014-0160`          |
 
 ```python
->>> cve.cve('CVE-2014-0160')
+>>> cve.id('CVE-2014-0160')
 ```
 
 <br/>
@@ -189,15 +189,17 @@ Outputs the last `n` amount of vulnerabilities. If the limit is not specified, t
 
 ##### Description
 
+**DISABLED ON cve.circl.lu**
+
 Returns all CVEs that are linked by a given key/value pair.
 
 | Argument            | Description                         | Example                     |
 | :-------------------| :---------------------------------- | :-------------------------- |
-| key                 | The key to link CVEs on             | `msbulletin.bulletin_id`    |
+| key                 | The key to link CVEs on             | `refmap.ms`                 |
 | value               | The value for the given key         | `MS16-098`                  |
 
 ```python
->>> cve.link('msbulletin.bulletin_id/MS16-098')
+>>> cve.link('refmap.ms/MS16-098')
 ```
 
 <br/>
