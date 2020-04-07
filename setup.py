@@ -19,7 +19,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 setup(
     name='ares',
     packages = ['ares'],
-    version = '0.5',
+    version = '0.6.0',
     description = 'Python wrapper around https://cve.circl.lu.',
     author = 'Martin Simon',
     author_email = 'me@martinsimon.me',
@@ -29,9 +29,6 @@ setup(
         'Buy me a coffee': 'https://github.com/barnumbirr/ares#buy-me-a-coffee',
     },
     license = 'Apache v2.0 License',
-    install_requires=[
-    'requests>=2.18.4'
-    ],
     keywords=['CVE', 'cybersecurity', 'vulnerability', 'circl.lu'],
     classifiers=[
         'License :: OSI Approved :: Apache Software License',
@@ -39,7 +36,7 @@ setup(
         'Intended Audience :: Developers',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     long_description = long_description,

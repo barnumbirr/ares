@@ -3,12 +3,11 @@
 
 import json
 import requests
-from requests.compat import urljoin
 
 class CVESearch(object):
 
 	_session = None
-	__DEFAULT_BASE_URL = 'https://cve.circl.lu/api/'
+	__DEFAULT_BASE_URL = "https://cve.circl.lu/api/"
 	__DEFAULT_TIMEOUT = 120
 
 	def __init__(self, base_url = __DEFAULT_BASE_URL, request_timeout = __DEFAULT_TIMEOUT):
@@ -21,11 +20,16 @@ class CVESearch(object):
 			self._session = requests.Session()
 			self._session.headers.update({'Content-Type': 'application/json'})
 			self._session.headers.update({'User-agent': 'ares - python wrapper \
-		around cve.circl.lu (github.com/mrsmn/ares)'})
+		around cve.circl.lu (github.com/barnumbirr/ares)'})
 		return self._session
 
 	def __request(self, endpoint, query):
-		response_object = self.session.get(requests.compat.urljoin(self.base_url + endpoint, query),
+		# There is probably a more elegant way to do this ¯\_(ツ)_/¯
+		if query:
+			response_object = self.session.get(requests.compat.urljoin(self.base_url, endpoint + query),
+		                                   timeout = self.request_timeout)
+		else:
+			response_object = self.session.get(requests.compat.urljoin(self.base_url, endpoint),
 		                                   timeout = self.request_timeout)
 
 		try:
@@ -36,35 +40,47 @@ class CVESearch(object):
 		return response
 
 	def browse(self, param=None):
-		""" browse() returns a dict containing all the vendors
-			browse(vendor) returns a dict containing all the products
-			associated to a vendor
-		"""
 		response = self.__request('browse/', query=param)
 		return response
 
-	def search(self, param):
-		""" search() returns a dict containing all the vulnerabilities per
-			vendor and a specific product
-		"""
-		response = self.__request('search/', query=param)
+	def capec(self, param):
+		response = self.__request('capec/', query=param)
 		return response
 
-	def id(self, param):
-		""" id() returns a dict containing a specific CVE ID """
+	# def cpe22(self, param):
+	# 	response = self.__request('cpe2.2/', query=param)
+	# 	return response
+
+
+	# def cpe23(self, param):
+	# 	response = self.__request('cpe2.3/', query=param)
+	# 	return response
+
+	def cve(self, param):
 		response = self.__request('cve/', query=param)
 		return response
 
-	def last(self):
-		""" last() returns a dict containing the last 30 CVEs including CAPEC,
-			CWE and CPE expansions
-		"""
-		response = self.__request('last/', query=None)
+	# def cvefor(self, param):
+	# 	response = self.__request('cvefor/', query=param)
+	# 	return response
+
+	def cwe(self):
+		""" Outputs a list of all CWEs (Common Weakness Enumeration). """
+		response = self.__request('cwe', query=None)
 		return response
 
 	def dbinfo(self):
-		""" dbinfo() returns a dict containing more information about
-			the current databases in use and when it was updated
-		"""
 		response = self.__request('dbInfo', query=None)
 		return response
+
+	def last(self, param):
+		response = self.__request('last/', query=param)
+		return response
+
+	def link(self, param):
+		response = self.__request('link/', query=param)
+		return response
+
+	# def search(self, param):
+	# 	response = self.__request('search/', query=param)
+	# 	return response
