@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ares"
+version = "1.0.0"
+description = "Python wrapper around the Vulnerability-Lookup API (vulnerability.circl.lu)"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+authors = [
+    {name = "Martin Simon"},
+]
+keywords = [
+    "CVE",
+    "cybersecurity",
+    "vulnerability",
+    "vulnerability-lookup",
+    "circl.lu",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests>=2.25.0",
+    "click>=8.0",
+]
+
+[project.scripts]
+ares-cli = "ares.cli:cli"
+
+[project.urls]
+Homepage = "https://github.com/barnumbirr/ares"
+Repository = "https://github.com/barnumbirr/ares"
+"Bug Tracker" = "https://github.com/barnumbirr/ares/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "responses>=0.20",
+]
+
+[tool.setuptools.packages.find]
+include = ["ares*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
