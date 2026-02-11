@@ -8,7 +8,7 @@
 It lets you query CVEs, EPSS scores, KEV catalogs, CWEs, and more — from
 Python code or directly from the terminal.
 
-Requires Python 3.9+. Licensed under the Apache License 2.0.
+Requires Python 3.10+. Licensed under the Apache License 2.0.
 
 ## Installation
 

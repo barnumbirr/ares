@@ -6,6 +6,7 @@ import json
 
 import responses
 
+from ares import __version__
 from ares.cli import cli
 
 BASE_URL = "https://vulnerability.circl.lu/api"
@@ -19,7 +20,7 @@ class TestGlobalOptions:
     def test_version(self, runner):
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "1.0.0" in result.output
+        assert __version__ in result.output
 
     @responses.activate
     def test_api_key_option(self, runner):
