@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ares"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python wrapper around the Vulnerability-Lookup API (vulnerability.circl.lu)"
 readme = "README.md"
 license = "Apache-2.0"
@@ -33,7 +33,7 @@ classifiers = [
 ]
 dependencies = [
     "requests>=2.25.0",
-    "click>=8.0",
+    "click>=8.2",
 ]
 
 [project.scripts]

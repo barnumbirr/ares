@@ -372,7 +372,7 @@ class TestErrorHandling:
         )
         result = runner.invoke(cli, ["vuln", "get", "CVE-9999-0000"])
         assert result.exit_code != 0
-        assert "HTTP 404" in result.stderr
+        assert "HTTP 404" in result.output
 
     @responses.activate
     def test_connection_error(self, runner):
@@ -380,7 +380,7 @@ class TestErrorHandling:
         responses.get(f"{BASE_URL}/browse/", body=CE("refused"))
         result = runner.invoke(cli, ["browse"])
         assert result.exit_code != 0
-        assert "connection failed" in result.stderr
+        assert "connection failed" in result.output
 
     @responses.activate
     def test_timeout(self, runner):
@@ -388,4 +388,4 @@ class TestErrorHandling:
         responses.get(f"{BASE_URL}/browse/", body=Timeout("slow"))
         result = runner.invoke(cli, ["browse"])
         assert result.exit_code != 0
-        assert "timed out" in result.stderr
+        assert "timed out" in result.output

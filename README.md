@@ -347,7 +347,8 @@ limitations under the License.
 If you feel like buying me a coffee (or a beer?), donations are welcome:
 
 ```
-BTC : 1BNFXHPNRtg7LrLUmQWwPUwzoicUi3uP8Q
-ETH : 0xd061B7dD794F6EB357bf132172ce06D1B0E5b97B
-BCH : qpcmv8vstulfhgdf29fd8sf2g769sszscvaktty2rv
+BTC : bc1qq04jnuqqavpccfptmddqjkg7cuspy3new4sxq9
+DOGE: DRBkryyau5CMxpBzVmrBAjK6dVdMZSBsuS
+ETH : 0x2238A11856428b72E80D70Be8666729497059d95
+LTC : MQwXsBrArLRHQzwQZAjJPNrxGS1uNDDKX6
 ```

@@ -22,4 +22,4 @@ def auth_client():
 @pytest.fixture
 def runner():
     """Click CLI test runner."""
-    return CliRunner(mix_stderr=False)
+    return CliRunner()
