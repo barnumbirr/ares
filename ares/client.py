@@ -10,12 +10,12 @@ import typing as t
 
 import requests
 
-from .exceptions import AresError
+from .exceptions import AresError, HTTPError
 from .exceptions import ConnectionError as ConnectionError
-from .exceptions import HTTPError
 from .exceptions import TimeoutError as TimeoutError
 
-log = logging.getLogger("ares")
+log = logging.getLogger(__name__)
+
 
 class VulnLookup:
     """Client for the Vulnerability-Lookup API.
@@ -62,10 +62,12 @@ class VulnLookup:
 
     def _make_session(self) -> requests.Session:
         session = requests.Session()
-        session.headers.update({
-            "Content-Type": "application/json",
-            "User-Agent": "ares - python wrapper (github.com/barnumbirr/ares)",
-        })
+        session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "User-Agent": "ares - python wrapper (github.com/barnumbirr/ares)",
+            }
+        )
         if self.api_key is not None:
             session.headers["X-API-KEY"] = self.api_key
         return session
@@ -89,7 +91,11 @@ class VulnLookup:
         log.debug("%s %s params=%s", method, url, params)
         try:
             resp = self.session.request(
-                method, url, params=params, json=json, timeout=self.timeout,
+                method,
+                url,
+                params=params,
+                json=json,
+                timeout=self.timeout,
             )
             log.debug("response %s (%d bytes)", resp.status_code, len(resp.content))
             resp.raise_for_status()
@@ -104,9 +110,7 @@ class VulnLookup:
         try:
             return resp.json()
         except ValueError as exc:
-            raise AresError(
-                f"invalid JSON in response: {resp.text[:200]}"
-            ) from exc
+            raise AresError(f"invalid JSON in response: {resp.text[:200]}") from exc
 
     def _get(self, path: str, **params: t.Any) -> t.Any:
         return self._request("GET", path, params=params)
@@ -126,26 +130,44 @@ class VulnLookup:
             return self._get(f"browse/{vendor}")
         return self._get("browse/")
 
-    def vulnerability(self, vuln_id, *, with_meta=None, with_linked=None,
-                      with_comments=None, with_bundles=None,
-                      with_sightings=None):
+    def vulnerability(
+        self, vuln_id, *, with_meta=None, with_linked=None, with_comments=None, with_bundles=None, with_sightings=None
+    ):
         """Get a specific vulnerability by ID."""
         return self._get(
             f"vulnerability/{vuln_id}",
-            with_meta=with_meta, with_linked=with_linked,
-            with_comments=with_comments, with_bundles=with_bundles,
+            with_meta=with_meta,
+            with_linked=with_linked,
+            with_comments=with_comments,
+            with_bundles=with_bundles,
             with_sightings=with_sightings,
         )
 
-    def vulnerabilities(self, *, product=None, light=None, cwe=None,
-                        since=None, sort_order=None, date_sort=None,
-                        per_page=None, page=None, source=None):
+    def vulnerabilities(
+        self,
+        *,
+        product=None,
+        light=None,
+        cwe=None,
+        since=None,
+        sort_order=None,
+        date_sort=None,
+        per_page=None,
+        page=None,
+        source=None,
+    ):
         """List vulnerabilities with optional filtering."""
         return self._get(
             "vulnerability/",
-            product=product, light=light, cwe=cwe, since=since,
-            sort_order=sort_order, date_sort=date_sort,
-            per_page=per_page, page=page, source=source,
+            product=product,
+            light=light,
+            cwe=cwe,
+            since=since,
+            sort_order=sort_order,
+            date_sort=date_sort,
+            per_page=per_page,
+            page=page,
+            source=source,
         )
 
     def create_vulnerability(self, data):
@@ -164,30 +186,40 @@ class VulnLookup:
         """List known CNAs (Certificate Numbering Authorities)."""
         return self._get("vulnerability/browse/assigners")
 
-    def search(self, vendor, product, *, page=None, per_page=None,
-               since=None):
+    def search(self, vendor, product, *, page=None, per_page=None, since=None):
         """Search vulnerabilities by vendor and product."""
         return self._get(
             f"vulnerability/search/{vendor}/{product}",
-            page=page, per_page=per_page, since=since,
+            page=page,
+            per_page=per_page,
+            since=since,
         )
 
-    def cpe_search(self, cpe, *, sort_order=None, date_sort=None,
-                   per_page=None, page=None, source=None):
+    def cpe_search(self, cpe, *, sort_order=None, date_sort=None, per_page=None, page=None, source=None):
         """Search vulnerabilities by CPE string."""
         return self._get(
             f"vulnerability/cpesearch/{cpe}",
-            sort_order=sort_order, date_sort=date_sort,
-            per_page=per_page, page=page, source=source,
+            sort_order=sort_order,
+            date_sort=date_sort,
+            per_page=per_page,
+            page=page,
+            source=source,
         )
 
-    def bundles(self, *, page=None, per_page=None, uuid=None, author=None,
-                vuln_id=None, meta=None, date_from=None, date_to=None):
+    def bundles(
+        self, *, page=None, per_page=None, uuid=None, author=None, vuln_id=None, meta=None, date_from=None, date_to=None
+    ):
         """List all bundles."""
         return self._get(
             "bundle/",
-            page=page, per_page=per_page, uuid=uuid, author=author,
-            vuln_id=vuln_id, meta=meta, date_from=date_from, date_to=date_to,
+            page=page,
+            per_page=per_page,
+            uuid=uuid,
+            author=author,
+            vuln_id=vuln_id,
+            meta=meta,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     def bundle(self, uuid):
@@ -202,13 +234,20 @@ class VulnLookup:
         """Delete a bundle."""
         return self._delete(f"bundle/{uuid}")
 
-    def comments(self, *, page=None, per_page=None, uuid=None, vuln_id=None,
-                 author=None, meta=None, date_from=None, date_to=None):
+    def comments(
+        self, *, page=None, per_page=None, uuid=None, vuln_id=None, author=None, meta=None, date_from=None, date_to=None
+    ):
         """List all comments."""
         return self._get(
             "comment/",
-            page=page, per_page=per_page, uuid=uuid, vuln_id=vuln_id,
-            author=author, meta=meta, date_from=date_from, date_to=date_to,
+            page=page,
+            per_page=per_page,
+            uuid=uuid,
+            vuln_id=vuln_id,
+            author=author,
+            meta=meta,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     def comment(self, uuid):
@@ -223,15 +262,33 @@ class VulnLookup:
         """Delete a comment."""
         return self._delete(f"comment/{uuid}")
 
-    def sightings(self, *, page=None, per_page=None, uuid=None, type=None,
-                  vuln_id=None, author=None, date_from=None, date_to=None,
-                  source=None, advisory_status=None):
+    def sightings(
+        self,
+        *,
+        page=None,
+        per_page=None,
+        uuid=None,
+        type=None,
+        vuln_id=None,
+        author=None,
+        date_from=None,
+        date_to=None,
+        source=None,
+        advisory_status=None,
+    ):
         """List all sightings."""
         return self._get(
             "sighting/",
-            page=page, per_page=per_page, uuid=uuid, type=type,
-            vuln_id=vuln_id, author=author, date_from=date_from,
-            date_to=date_to, source=source, advisory_status=advisory_status,
+            page=page,
+            per_page=per_page,
+            uuid=uuid,
+            type=type,
+            vuln_id=vuln_id,
+            author=author,
+            date_from=date_from,
+            date_to=date_to,
+            source=source,
+            advisory_status=advisory_status,
         )
 
     def sighting(self, uuid):
@@ -246,19 +303,23 @@ class VulnLookup:
         """Delete a specific sighting."""
         return self._delete(f"sighting/{uuid}")
 
-    def delete_sightings(self, *, author=None, source=None, date_from=None,
-                         date_to=None):
+    def delete_sightings(self, *, author=None, source=None, date_from=None, date_to=None):
         """Delete sightings matching the given filters."""
         return self._delete(
             "sighting/",
-            author=author, source=source, date_from=date_from,
+            author=author,
+            source=source,
+            date_from=date_from,
             date_to=date_to,
         )
 
     def cwes(self, *, vuln_id=None, page=None, per_page=None):
         """List all CWEs."""
         return self._get(
-            "cwe/", vuln_id=vuln_id, page=page, per_page=per_page,
+            "cwe/",
+            vuln_id=vuln_id,
+            page=page,
+            per_page=per_page,
         )
 
     def cwe(self, cwe_id):
@@ -276,29 +337,46 @@ class VulnLookup:
     def emb3d_techniques(self, *, page=None, per_page=None, vuln_id=None):
         """List MITRE EMB3D adversarial techniques."""
         return self._get(
-            "emb3d/", page=page, per_page=per_page, vuln_id=vuln_id,
+            "emb3d/",
+            page=page,
+            per_page=per_page,
+            vuln_id=vuln_id,
         )
 
     def emb3d(self, emb3d_id):
         """Get detailed EMB3D technique information."""
         return self._get(f"emb3d/{emb3d_id}")
 
-    def organizations(self, *, page=None, per_page=None, id=None, uuid=None,
-                      name=None, gna_id=None):
+    def organizations(self, *, page=None, per_page=None, id=None, uuid=None, name=None, gna_id=None):
         """List all organizations."""
         return self._get(
             "organization/",
-            page=page, per_page=per_page, id=id, uuid=uuid,
-            name=name, gna_id=gna_id,
+            page=page,
+            per_page=per_page,
+            id=id,
+            uuid=uuid,
+            name=name,
+            gna_id=gna_id,
         )
 
-    def products(self, *, page=None, per_page=None, uuid=None, name=None,
-                 organization_name=None, organization_id=None,
-                 organization_uuid=None):
+    def products(
+        self,
+        *,
+        page=None,
+        per_page=None,
+        uuid=None,
+        name=None,
+        organization_name=None,
+        organization_id=None,
+        organization_uuid=None,
+    ):
         """List all products."""
         return self._get(
             "product/",
-            page=page, per_page=per_page, uuid=uuid, name=name,
+            page=page,
+            per_page=per_page,
+            uuid=uuid,
+            name=name,
             organization_name=organization_name,
             organization_id=organization_id,
             organization_uuid=organization_uuid,
@@ -316,17 +394,31 @@ class VulnLookup:
         """List CNW KEV entries."""
         return self._get("cnw_kev/", page=page, per_page=per_page)
 
-    def kevs(self, *, page=None, per_page=None, vuln_id=None,
-             status_reason=None, exploited=None,
-             vulnerability_lookup_origin=None, date_from=None,
-             date_to=None, author=None):
+    def kevs(
+        self,
+        *,
+        page=None,
+        per_page=None,
+        vuln_id=None,
+        status_reason=None,
+        exploited=None,
+        vulnerability_lookup_origin=None,
+        date_from=None,
+        date_to=None,
+        author=None,
+    ):
         """List KEV entries."""
         return self._get(
             "kev/",
-            page=page, per_page=per_page, vuln_id=vuln_id,
-            status_reason=status_reason, exploited=exploited,
+            page=page,
+            per_page=per_page,
+            vuln_id=vuln_id,
+            status_reason=status_reason,
+            exploited=exploited,
             vulnerability_lookup_origin=vulnerability_lookup_origin,
-            date_from=date_from, date_to=date_to, author=author,
+            date_from=date_from,
+            date_to=date_to,
+            author=author,
         )
 
     def kev(self, uuid):
@@ -353,7 +445,9 @@ class VulnLookup:
         """List GNAs from local GCVE registry."""
         return self._get(
             "gcve/registry",
-            page=page, per_page=per_page, short_name=short_name,
+            page=page,
+            per_page=per_page,
+            short_name=short_name,
         )
 
     def gcve_registry_integrity(self):
@@ -364,7 +458,8 @@ class VulnLookup:
         """Get rules associated with a vulnerability."""
         return self._get(
             f"rulezet/search_rules_by_vulnerabilities/{vuln_id}",
-            page=page, per_page=per_page,
+            page=page,
+            per_page=per_page,
         )
 
     def users(self, *, page=None, per_page=None):
@@ -377,10 +472,15 @@ class VulnLookup:
 
     def create_user(self, *, login, name, organisation, email):
         """Register a new user account."""
-        return self._post("user/", json={
-            "login": login, "name": name,
-            "organisation": organisation, "email": email,
-        })
+        return self._post(
+            "user/",
+            json={
+                "login": login,
+                "name": name,
+                "organisation": organisation,
+                "email": email,
+            },
+        )
 
     def regenerate_api_key(self, data):
         """Regenerate the API key for the authenticated user."""
@@ -390,53 +490,63 @@ class VulnLookup:
         """Delete a user account."""
         return self._delete(f"user/{user_id}")
 
-    def stats_vulnerability_count(self, *, state=None, period=None,
-                                  source=None):
+    def stats_vulnerability_count(self, *, state=None, period=None, source=None):
         """Get published/reserved vulnerability count."""
         return self._get(
             "stats/vulnerability/count",
-            state=state, period=period, source=source,
+            state=state,
+            period=period,
+            source=source,
         )
 
-    def stats_most_sighted(self, *, date_from=None, date_to=None,
-                           sighting_type=None, limit=None, output=None):
+    def stats_most_sighted(self, *, date_from=None, date_to=None, sighting_type=None, limit=None, output=None):
         """Get most sighted vulnerabilities."""
         return self._get(
             "stats/vulnerability/most_sighted",
-            date_from=date_from, date_to=date_to,
-            sighting_type=sighting_type, limit=limit, output=output,
+            date_from=date_from,
+            date_to=date_to,
+            sighting_type=sighting_type,
+            limit=limit,
+            output=output,
         )
 
-    def stats_most_commented(self, *, date_from=None, date_to=None,
-                             limit=None, output=None):
+    def stats_most_commented(self, *, date_from=None, date_to=None, limit=None, output=None):
         """Get most commented vulnerabilities."""
         return self._get(
             "stats/vulnerability/most_commented",
-            date_from=date_from, date_to=date_to,
-            limit=limit, output=output,
+            date_from=date_from,
+            date_to=date_to,
+            limit=limit,
+            output=output,
         )
 
-    def stats_vendors_ranking(self, *, limit=None, output=None, period=None,
-                              source=None):
+    def stats_vendors_ranking(self, *, limit=None, output=None, period=None, source=None):
         """Get vendors ranking."""
         return self._get(
             "stats/vendors/ranking",
-            limit=limit, output=output, period=period, source=source,
+            limit=limit,
+            output=output,
+            period=period,
+            source=source,
         )
 
-    def stats_assigners_ranking(self, *, limit=None, output=None, period=None,
-                                source=None):
+    def stats_assigners_ranking(self, *, limit=None, output=None, period=None, source=None):
         """Get assigners ranking."""
         return self._get(
             "stats/assigners/ranking",
-            limit=limit, output=output, period=period, source=source,
+            limit=limit,
+            output=output,
+            period=period,
+            source=source,
         )
 
     def stats_most_used_cwes(self, *, limit=None, output=None, period=None):
         """Get most used CWEs based on sightings."""
         return self._get(
             "stats/cwe/most_used",
-            limit=limit, output=output, period=period,
+            limit=limit,
+            output=output,
+            period=period,
         )
 
     def classify_severity(self, description, *, model=None):
@@ -469,3 +579,82 @@ class VulnLookup:
     def valkey_up(self):
         """Check if Valkey/Redis is operational."""
         return self._get("system/valkey_up")
+
+    # -- pagination iterators -----------------------------------------------
+
+    def _paginate(self, fetch, *args, per_page=100, **kwargs):
+        """Lazily iterate over all pages of a paginated endpoint.
+
+        :param fetch: single-page method to call repeatedly.
+        :param per_page: results per page (default 100).
+        :param kwargs: forwarded to *fetch* on every call.
+        """
+        page = 1
+        while True:
+            results = fetch(*args, page=page, per_page=per_page, **kwargs)
+            if not isinstance(results, list) or not results:
+                break
+            yield from results
+            if len(results) < per_page:
+                break
+            page += 1
+
+    def vulnerabilities_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`vulnerabilities`, but lazily iterates all pages."""
+        return self._paginate(self.vulnerabilities, per_page=per_page, **kwargs)
+
+    def search_iter(self, vendor, product, *, per_page=100, **kwargs):
+        """Like :meth:`search`, but lazily iterates all pages."""
+        return self._paginate(self.search, vendor, product, per_page=per_page, **kwargs)
+
+    def bundles_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`bundles`, but lazily iterates all pages."""
+        return self._paginate(self.bundles, per_page=per_page, **kwargs)
+
+    def comments_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`comments`, but lazily iterates all pages."""
+        return self._paginate(self.comments, per_page=per_page, **kwargs)
+
+    def sightings_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`sightings`, but lazily iterates all pages."""
+        return self._paginate(self.sightings, per_page=per_page, **kwargs)
+
+    def cwes_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`cwes`, but lazily iterates all pages."""
+        return self._paginate(self.cwes, per_page=per_page, **kwargs)
+
+    def capecs_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`capecs`, but lazily iterates all pages."""
+        return self._paginate(self.capecs, per_page=per_page, **kwargs)
+
+    def emb3d_techniques_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`emb3d_techniques`, but lazily iterates all pages."""
+        return self._paginate(self.emb3d_techniques, per_page=per_page, **kwargs)
+
+    def organizations_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`organizations`, but lazily iterates all pages."""
+        return self._paginate(self.organizations, per_page=per_page, **kwargs)
+
+    def products_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`products`, but lazily iterates all pages."""
+        return self._paginate(self.products, per_page=per_page, **kwargs)
+
+    def cisa_kev_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`cisa_kev`, but lazily iterates all pages."""
+        return self._paginate(self.cisa_kev, per_page=per_page, **kwargs)
+
+    def cnw_kev_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`cnw_kev`, but lazily iterates all pages."""
+        return self._paginate(self.cnw_kev, per_page=per_page, **kwargs)
+
+    def kevs_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`kevs`, but lazily iterates all pages."""
+        return self._paginate(self.kevs, per_page=per_page, **kwargs)
+
+    def users_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`users`, but lazily iterates all pages."""
+        return self._paginate(self.users, per_page=per_page, **kwargs)
+
+    def gcve_registry_iter(self, *, per_page=100, **kwargs):
+        """Like :meth:`gcve_registry`, but lazily iterates all pages."""
+        return self._paginate(self.gcve_registry, per_page=per_page, **kwargs)

@@ -1,7 +1,7 @@
 # ![icon](https://raw.githubusercontent.com/barnumbirr/ares/master/doc/ares.png) ares
 
-[![PyPi Version](http://img.shields.io/pypi/v/ares.svg)](https://pypi.python.org/pypi/ares/)
-[![CI](https://github.com/barnumbirr/ares/actions/workflows/ci.yml/badge.svg)](https://github.com/barnumbirr/ares/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/ares)](https://pypi.org/project/ares/)
+[![Python](https://img.shields.io/pypi/pyversions/ares)](https://pypi.org/project/ares/)
 
 **ares** is a Python wrapper and CLI for the
 [Vulnerability-Lookup](https://vulnerability.circl.lu) API.
@@ -255,6 +255,21 @@ with VulnLookup(api_key="your-api-key") as client:
     client.create_sighting({"type": "seen", "vulnerability": "CVE-2024-1234"})
 ```
 
+### Automatic pagination
+
+Every paginated method has a `*_iter()` variant that lazily fetches all pages:
+
+```python
+with VulnLookup() as client:
+    # Iterate over ALL vulnerabilities for a product (fetches pages on demand)
+    for vuln in client.vulnerabilities_iter(product="flask", per_page=50):
+        print(vuln["cveMetadata"]["cveId"])
+
+    # Works with search too
+    for vuln in client.search_iter("apache", "httpd", per_page=100):
+        print(vuln["cveMetadata"]["cveId"])
+```
+
 ### Statistics
 
 ```python
@@ -303,26 +318,27 @@ logging.basicConfig(level=logging.DEBUG)
 | Category | Methods |
 |---|---|
 | Browse | `browse([vendor])` |
-| Vulnerability | `vulnerability(id, ...)`, `vulnerabilities(...)`, `search(vendor, product, ...)`, `cpe_search(cpe, ...)`, `vendors()`, `assigners()`, `create_vulnerability(data)`, `delete_vulnerability(id)` |
-| Bundle | `bundles(...)`, `bundle(uuid)`, `create_bundle(data)`, `delete_bundle(uuid)` |
-| Comment | `comments(...)`, `comment(uuid)`, `create_comment(data)`, `delete_comment(uuid)` |
-| Sighting | `sightings(...)`, `sighting(uuid)`, `create_sighting(data)`, `delete_sighting(uuid)`, `delete_sightings(...)` |
-| CWE | `cwes(...)`, `cwe(id)` |
-| CAPEC | `capecs(...)`, `capec(id)` |
-| EMB3D | `emb3d_techniques(...)`, `emb3d(id)` |
-| Organization | `organizations(...)` |
-| Product | `products(...)` |
+| Vulnerability | `vulnerability(id, ...)`, `vulnerabilities(...)`, `vulnerabilities_iter(...)`, `search(vendor, product, ...)`, `search_iter(vendor, product, ...)`, `cpe_search(cpe, ...)`, `vendors()`, `assigners()`, `create_vulnerability(data)`, `delete_vulnerability(id)` |
+| Bundle | `bundles(...)`, `bundles_iter(...)`, `bundle(uuid)`, `create_bundle(data)`, `delete_bundle(uuid)` |
+| Comment | `comments(...)`, `comments_iter(...)`, `comment(uuid)`, `create_comment(data)`, `delete_comment(uuid)` |
+| Sighting | `sightings(...)`, `sightings_iter(...)`, `sighting(uuid)`, `create_sighting(data)`, `delete_sighting(uuid)`, `delete_sightings(...)` |
+| CWE | `cwes(...)`, `cwes_iter(...)`, `cwe(id)` |
+| CAPEC | `capecs(...)`, `capecs_iter(...)`, `capec(id)` |
+| EMB3D | `emb3d_techniques(...)`, `emb3d_techniques_iter(...)`, `emb3d(id)` |
+| Organization | `organizations(...)`, `organizations_iter(...)` |
+| Product | `products(...)`, `products_iter(...)` |
 | EPSS | `epss(vuln_id)` |
-| KEV | `cisa_kev(...)`, `cnw_kev(...)`, `kevs(...)`, `kev(uuid)`, `create_kev(data)`, `update_kev(uuid, data)`, `delete_kev(uuid)` |
-| GCVE | `gcve_registry(...)`, `gcve_registry_integrity()` |
+| KEV | `cisa_kev(...)`, `cisa_kev_iter(...)`, `cnw_kev(...)`, `cnw_kev_iter(...)`, `kevs(...)`, `kevs_iter(...)`, `kev(uuid)`, `create_kev(data)`, `update_kev(uuid, data)`, `delete_kev(uuid)` |
+| GCVE | `gcve_registry(...)`, `gcve_registry_iter(...)`, `gcve_registry_integrity()` |
 | Rulezet | `rulezet(vuln_id)` |
-| User | `me()`, `users(...)`, `create_user(...)`, `regenerate_api_key(data)`, `delete_user(id)` |
+| User | `me()`, `users(...)`, `users_iter(...)`, `create_user(...)`, `regenerate_api_key(data)`, `delete_user(id)` |
 | Stats | `stats_vulnerability_count(...)`, `stats_most_sighted(...)`, `stats_most_commented(...)`, `stats_vendors_ranking(...)`, `stats_assigners_ranking(...)`, `stats_most_used_cwes(...)` |
 | VLAI | `classify_severity(description, ...)` |
 | System | `db_info()`, `pg_info()`, `config_info()`, `check_process()`, `check_smtp()`, `valkey_up()` |
 
 All list methods accept `page` and `per_page` for pagination. Parameters set to
-`None` are omitted from the request.
+`None` are omitted from the request. Every paginated method also has a
+`*_iter()` variant that lazily fetches all pages automatically.
 
 ## License
 

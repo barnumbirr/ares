@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+
 class AresError(Exception):
     """Base exception for all ares errors."""
+
 
 class ConnectionError(AresError):
     """Raised when the connection to the API fails."""
 
+
 class TimeoutError(AresError):
     """Raised when the request to the API times out."""
+
 
 class HTTPError(AresError):
     """Raised when the API returns an error HTTP status code.

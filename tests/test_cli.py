@@ -11,6 +11,7 @@ from ares.cli import cli
 
 BASE_URL = "https://vulnerability.circl.lu/api"
 
+
 class TestGlobalOptions:
     def test_help(self, runner):
         result = runner.invoke(cli, ["--help"])
@@ -45,11 +46,18 @@ class TestGlobalOptions:
         assert responses.calls[0].request.url.startswith(custom)
 
     @responses.activate
+    def test_timeout_option(self, runner):
+        responses.get(f"{BASE_URL}/browse/", json=["vendor1"])
+        result = runner.invoke(cli, ["--timeout", "30", "browse"])
+        assert result.exit_code == 0
+
+    @responses.activate
     def test_compact_flag(self, runner):
         responses.get(f"{BASE_URL}/browse/", json=["vendor1", "vendor2"])
         result = runner.invoke(cli, ["--compact", "browse"])
         assert result.exit_code == 0
         assert result.output.strip() == '["vendor1","vendor2"]'
+
 
 class TestBrowse:
     @responses.activate
@@ -66,6 +74,7 @@ class TestBrowse:
         assert result.exit_code == 0
         assert json.loads(result.output) == ["httpd", "tomcat"]
 
+
 class TestEpss:
     @responses.activate
     def test_epss(self, runner):
@@ -74,6 +83,7 @@ class TestEpss:
         result = runner.invoke(cli, ["--compact", "epss", "CVE-2024-1234"])
         assert result.exit_code == 0
         assert json.loads(result.output) == payload
+
 
 class TestRulezet:
     @responses.activate
@@ -84,6 +94,7 @@ class TestRulezet:
         result = runner.invoke(cli, ["--compact", "rulezet", "CVE-2024-1234"])
         assert result.exit_code == 0
         assert json.loads(result.output) == payload
+
 
 class TestVuln:
     @responses.activate
@@ -97,7 +108,8 @@ class TestVuln:
     def test_get_with_meta(self, runner):
         responses.get(f"{BASE_URL}/vulnerability/CVE-2024-1234", json={"id": "CVE-2024-1234"})
         result = runner.invoke(
-            cli, ["--compact", "vuln", "get", "CVE-2024-1234", "--with-meta"],
+            cli,
+            ["--compact", "vuln", "get", "CVE-2024-1234", "--with-meta"],
         )
         assert result.exit_code == 0
         assert "with_meta=True" in responses.calls[0].request.url
@@ -106,7 +118,8 @@ class TestVuln:
     def test_list_with_product(self, runner):
         responses.get(f"{BASE_URL}/vulnerability/", json=[])
         result = runner.invoke(
-            cli, ["--compact", "vuln", "list", "--product", "flask"],
+            cli,
+            ["--compact", "vuln", "list", "--product", "flask"],
         )
         assert result.exit_code == 0
         assert "product=flask" in responses.calls[0].request.url
@@ -114,10 +127,12 @@ class TestVuln:
     @responses.activate
     def test_search(self, runner):
         responses.get(
-            f"{BASE_URL}/vulnerability/search/apache/httpd", json=[],
+            f"{BASE_URL}/vulnerability/search/apache/httpd",
+            json=[],
         )
         result = runner.invoke(
-            cli, ["--compact", "vuln", "search", "apache", "httpd"],
+            cli,
+            ["--compact", "vuln", "search", "apache", "httpd"],
         )
         assert result.exit_code == 0
 
@@ -126,9 +141,24 @@ class TestVuln:
         cpe = "cpe:2.3:a:apache:httpd"
         responses.get(f"{BASE_URL}/vulnerability/cpesearch/{cpe}", json=[])
         result = runner.invoke(
-            cli, ["--compact", "vuln", "cpe-search", cpe],
+            cli,
+            ["--compact", "vuln", "cpe-search", cpe],
         )
         assert result.exit_code == 0
+
+    @responses.activate
+    def test_vendors(self, runner):
+        responses.get(f"{BASE_URL}/vulnerability/browse/", json=["apache", "microsoft"])
+        result = runner.invoke(cli, ["--compact", "vuln", "vendors"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == ["apache", "microsoft"]
+
+    @responses.activate
+    def test_assigners(self, runner):
+        responses.get(f"{BASE_URL}/vulnerability/browse/assigners", json=["cna1"])
+        result = runner.invoke(cli, ["--compact", "vuln", "assigners"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == ["cna1"]
 
     def test_help(self, runner):
         result = runner.invoke(cli, ["vuln", "--help"])
@@ -136,6 +166,7 @@ class TestVuln:
         assert "get" in result.output
         assert "list" in result.output
         assert "search" in result.output
+
 
 class TestStats:
     @responses.activate
@@ -148,10 +179,12 @@ class TestStats:
     @responses.activate
     def test_most_sighted(self, runner):
         responses.get(
-            f"{BASE_URL}/stats/vulnerability/most_sighted", json=[],
+            f"{BASE_URL}/stats/vulnerability/most_sighted",
+            json=[],
         )
         result = runner.invoke(
-            cli, ["--compact", "stats", "most-sighted", "--limit", "5"],
+            cli,
+            ["--compact", "stats", "most-sighted", "--limit", "5"],
         )
         assert result.exit_code == 0
         assert "limit=5" in responses.calls[0].request.url
@@ -160,10 +193,12 @@ class TestStats:
     def test_vendors_ranking(self, runner):
         responses.get(f"{BASE_URL}/stats/vendors/ranking", json=[])
         result = runner.invoke(
-            cli, ["--compact", "stats", "vendors-ranking", "--period", "2024-06"],
+            cli,
+            ["--compact", "stats", "vendors-ranking", "--period", "2024-06"],
         )
         assert result.exit_code == 0
         assert "period=2024-06" in responses.calls[0].request.url
+
 
 class TestKev:
     @responses.activate
@@ -178,6 +213,7 @@ class TestKev:
         result = runner.invoke(cli, ["--compact", "kev", "cisa"])
         assert result.exit_code == 0
 
+
 class TestCweCapec:
     @responses.activate
     def test_cwe_get(self, runner):
@@ -191,6 +227,7 @@ class TestCweCapec:
         responses.get(f"{BASE_URL}/capec/", json=[])
         result = runner.invoke(cli, ["--compact", "capec", "list"])
         assert result.exit_code == 0
+
 
 class TestEmb3d:
     @responses.activate
@@ -210,10 +247,12 @@ class TestEmb3d:
     def test_list_with_vuln_id(self, runner):
         responses.get(f"{BASE_URL}/emb3d/", json=[])
         result = runner.invoke(
-            cli, ["--compact", "emb3d", "list", "--vuln-id", "CVE-2024-1234"],
+            cli,
+            ["--compact", "emb3d", "list", "--vuln-id", "CVE-2024-1234"],
         )
         assert result.exit_code == 0
         assert "vuln_id=CVE-2024-1234" in responses.calls[0].request.url
+
 
 class TestGcve:
     @responses.activate
@@ -226,7 +265,8 @@ class TestGcve:
     def test_registry_with_short_name(self, runner):
         responses.get(f"{BASE_URL}/gcve/registry", json=[])
         result = runner.invoke(
-            cli, ["--compact", "gcve", "registry", "--short-name", "CVE"],
+            cli,
+            ["--compact", "gcve", "registry", "--short-name", "CVE"],
         )
         assert result.exit_code == 0
         assert "short_name=CVE" in responses.calls[0].request.url
@@ -234,11 +274,13 @@ class TestGcve:
     @responses.activate
     def test_integrity(self, runner):
         responses.get(
-            f"{BASE_URL}/gcve/registry/integrity", json={"valid": True},
+            f"{BASE_URL}/gcve/registry/integrity",
+            json={"valid": True},
         )
         result = runner.invoke(cli, ["--compact", "gcve", "integrity"])
         assert result.exit_code == 0
         assert json.loads(result.output)["valid"] is True
+
 
 class TestOrganization:
     @responses.activate
@@ -251,10 +293,12 @@ class TestOrganization:
     def test_list_with_name(self, runner):
         responses.get(f"{BASE_URL}/organization/", json=[])
         result = runner.invoke(
-            cli, ["--compact", "organization", "list", "--name", "apache"],
+            cli,
+            ["--compact", "organization", "list", "--name", "apache"],
         )
         assert result.exit_code == 0
         assert "name=apache" in responses.calls[0].request.url
+
 
 class TestProduct:
     @responses.activate
@@ -267,23 +311,26 @@ class TestProduct:
     def test_list_with_filters(self, runner):
         responses.get(f"{BASE_URL}/product/", json=[])
         result = runner.invoke(
-            cli, ["--compact", "product", "list",
-                  "--name", "httpd", "--organization-name", "apache"],
+            cli,
+            ["--compact", "product", "list", "--name", "httpd", "--organization-name", "apache"],
         )
         assert result.exit_code == 0
         url = responses.calls[0].request.url
         assert "name=httpd" in url
         assert "organization_name=apache" in url
 
+
 class TestClassify:
     @responses.activate
     def test_classify(self, runner):
         payload = {"severity": "high"}
         responses.post(
-            f"{BASE_URL}/vlai/severity-classification", json=payload,
+            f"{BASE_URL}/vlai/severity-classification",
+            json=payload,
         )
         result = runner.invoke(
-            cli, ["--compact", "classify", "buffer overflow"],
+            cli,
+            ["--compact", "classify", "buffer overflow"],
         )
         assert result.exit_code == 0
         assert json.loads(result.output) == payload
@@ -291,15 +338,17 @@ class TestClassify:
     @responses.activate
     def test_classify_with_model(self, runner):
         responses.post(
-            f"{BASE_URL}/vlai/severity-classification", json={},
+            f"{BASE_URL}/vlai/severity-classification",
+            json={},
         )
         result = runner.invoke(
-            cli, ["--compact", "classify", "buffer overflow",
-                  "--model", "gpt-4"],
+            cli,
+            ["--compact", "classify", "buffer overflow", "--model", "gpt-4"],
         )
         assert result.exit_code == 0
         body = json.loads(responses.calls[0].request.body)
         assert body["model"] == "gpt-4"
+
 
 class TestBundleCommentSighting:
     @responses.activate
@@ -319,10 +368,12 @@ class TestBundleCommentSighting:
     def test_sighting_list_with_type(self, runner):
         responses.get(f"{BASE_URL}/sighting/", json=[])
         result = runner.invoke(
-            cli, ["--compact", "sighting", "list", "--type", "seen"],
+            cli,
+            ["--compact", "sighting", "list", "--type", "seen"],
         )
         assert result.exit_code == 0
         assert "type=seen" in responses.calls[0].request.url
+
 
 class TestSystemUser:
     @responses.activate
@@ -330,6 +381,13 @@ class TestSystemUser:
         responses.get(f"{BASE_URL}/system/dbInfo", json={"status": "ok"})
         result = runner.invoke(cli, ["--compact", "system", "db-info"])
         assert result.exit_code == 0
+
+    @responses.activate
+    def test_system_config(self, runner):
+        responses.get(f"{BASE_URL}/system/configInfo", json={"debug": False})
+        result = runner.invoke(cli, ["--compact", "system", "config"])
+        assert result.exit_code == 0
+        assert json.loads(result.output) == {"debug": False}
 
     @responses.activate
     def test_system_health(self, runner):
@@ -359,17 +417,20 @@ class TestSystemUser:
     def test_user_me(self, runner):
         responses.get(f"{BASE_URL}/user/me", json={"login": "admin"})
         result = runner.invoke(
-            cli, ["--compact", "--api-key", "key", "user", "me"],
+            cli,
+            ["--compact", "--api-key", "key", "user", "me"],
         )
         assert result.exit_code == 0
         assert json.loads(result.output)["login"] == "admin"
+
 
 class TestErrorHandling:
     @responses.activate
     def test_http_404(self, runner):
         responses.get(
             f"{BASE_URL}/vulnerability/CVE-9999-0000",
-            status=404, body="not found",
+            status=404,
+            body="not found",
         )
         result = runner.invoke(cli, ["vuln", "get", "CVE-9999-0000"])
         assert result.exit_code != 0
@@ -378,6 +439,7 @@ class TestErrorHandling:
     @responses.activate
     def test_connection_error(self, runner):
         from requests.exceptions import ConnectionError as CE
+
         responses.get(f"{BASE_URL}/browse/", body=CE("refused"))
         result = runner.invoke(cli, ["browse"])
         assert result.exit_code != 0
@@ -386,6 +448,7 @@ class TestErrorHandling:
     @responses.activate
     def test_timeout(self, runner):
         from requests.exceptions import Timeout
+
         responses.get(f"{BASE_URL}/browse/", body=Timeout("slow"))
         result = runner.invoke(cli, ["browse"])
         assert result.exit_code != 0

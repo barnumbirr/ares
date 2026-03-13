@@ -10,10 +10,10 @@ import typing as t
 import click
 
 from .client import VulnLookup
-from .exceptions import AresError
-from .exceptions import HTTPError
+from .exceptions import AresError, HTTPError
 
 F = t.TypeVar("F", bound=t.Callable[..., t.Any])
+
 
 def get_client(ctx: click.Context) -> VulnLookup:
     """Return the shared :class:`VulnLookup` client, creating it lazily."""
@@ -26,26 +26,31 @@ def get_client(ctx: click.Context) -> VulnLookup:
         ctx.call_on_close(ctx.obj["client"].close)
     return ctx.obj["client"]
 
+
 def output_json(ctx: click.Context, data: t.Any) -> None:
     """Write *data* as JSON to stdout."""
     compact = ctx.obj.get("compact", False)
-    if compact or not sys.stdout.isatty():
+    if compact or not sys.stdout.isatty():  # noqa: SIM108
         text = json.dumps(data, separators=(",", ":"))
     else:
         text = json.dumps(data, indent=2)
     click.echo(text)
 
+
 def handle_errors(fn: F) -> F:
     """Catch client exceptions and convert to :class:`click.ClickException`."""
+
     @functools.wraps(fn)
     def wrapper(*args: t.Any, **kwargs: t.Any) -> t.Any:
         try:
             return fn(*args, **kwargs)
         except HTTPError as exc:
-            raise click.ClickException(f"HTTP {exc.status_code}: {exc.message}")
+            raise click.ClickException(f"HTTP {exc.status_code}: {exc.message}") from None
         except AresError as exc:
-            raise click.ClickException(str(exc))
+            raise click.ClickException(str(exc)) from None
+
     return wrapper  # type: ignore[return-value]
+
 
 def pagination_options(fn: F) -> F:
     """Add ``--page`` and ``--per-page`` options."""
@@ -53,19 +58,17 @@ def pagination_options(fn: F) -> F:
     fn = click.option("--per-page", type=int, default=None, help="Results per page.")(fn)
     return fn
 
+
 def _flag_or_none(value: bool) -> bool | None:
     """Convert a boolean flag to ``True`` or ``None``."""
     return True if value else None
 
+
 @click.group()
-@click.option("--api-key", envvar="ARES_API_KEY", default=None,
-              help="API key (or set ARES_API_KEY).")
-@click.option("--base-url", default=None,
-              help="Base URL for the API.")
-@click.option("--timeout", type=int, default=120,
-              help="Request timeout in seconds.")
-@click.option("--compact", is_flag=True, default=False,
-              help="Force compact JSON output.")
+@click.option("--api-key", envvar="ARES_API_KEY", default=None, help="API key (or set ARES_API_KEY).")
+@click.option("--base-url", default=None, help="Base URL for the API.")
+@click.option("--timeout", type=int, default=120, help="Request timeout in seconds.")
+@click.option("--compact", is_flag=True, default=False, help="Force compact JSON output.")
 @click.version_option(package_name="ares")
 @click.pass_context
 def cli(ctx, api_key, base_url, timeout, compact):
@@ -76,6 +79,7 @@ def cli(ctx, api_key, base_url, timeout, compact):
     ctx.obj["timeout"] = timeout
     ctx.obj["compact"] = compact
 
+
 @cli.command()
 @click.argument("vendor", required=False, default=None)
 @click.pass_context
@@ -84,6 +88,7 @@ def browse(ctx, vendor):
     """List known vendors, or products for a specific vendor."""
     data = get_client(ctx).browse(vendor)
     output_json(ctx, data)
+
 
 @cli.command()
 @click.argument("cve_id")
@@ -94,6 +99,7 @@ def epss(ctx, cve_id):
     data = get_client(ctx).epss(cve_id)
     output_json(ctx, data)
 
+
 @cli.command()
 @click.argument("cve_id")
 @click.pass_context
@@ -103,9 +109,11 @@ def rulezet(ctx, cve_id):
     data = get_client(ctx).rulezet(cve_id)
     output_json(ctx, data)
 
+
 @cli.group()
 def vuln() -> None:
     """Vulnerability operations."""
+
 
 @vuln.command("get")
 @click.argument("cve_id")
@@ -116,8 +124,7 @@ def vuln() -> None:
 @click.option("--with-sightings", is_flag=True, default=False, help="Include sightings.")
 @click.pass_context
 @handle_errors
-def vuln_get(ctx, cve_id, with_meta, with_comments, with_linked,
-             with_bundles, with_sightings):
+def vuln_get(ctx, cve_id, with_meta, with_comments, with_linked, with_bundles, with_sightings):
     """Get a specific vulnerability by ID."""
     data = get_client(ctx).vulnerability(
         cve_id,
@@ -129,26 +136,31 @@ def vuln_get(ctx, cve_id, with_meta, with_comments, with_linked,
     )
     output_json(ctx, data)
 
+
 @vuln.command("list")
 @click.option("--product", default=None, help="Filter by product.")
 @click.option("--source", default=None, help="Filter by source.")
 @click.option("--cwe", default=None, help="Filter by CWE ID.")
 @click.option("--since", default=None, help="Only vulns since this date.")
-@click.option("--sort-order", type=click.Choice(["asc", "desc"]),
-              default=None, help="Sort order.")
+@click.option("--sort-order", type=click.Choice(["asc", "desc"]), default=None, help="Sort order.")
 @click.option("--date-sort", default=None, help="Date field to sort by.")
 @pagination_options
 @click.pass_context
 @handle_errors
-def vuln_list(ctx, product, source, cwe, since, sort_order, date_sort,
-              page, per_page):
+def vuln_list(ctx, product, source, cwe, since, sort_order, date_sort, page, per_page):
     """List vulnerabilities with optional filtering."""
     data = get_client(ctx).vulnerabilities(
-        product=product, source=source, cwe=cwe, since=since,
-        sort_order=sort_order, date_sort=date_sort,
-        page=page, per_page=per_page,
+        product=product,
+        source=source,
+        cwe=cwe,
+        since=since,
+        sort_order=sort_order,
+        date_sort=date_sort,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @vuln.command("search")
 @click.argument("vendor")
@@ -160,15 +172,19 @@ def vuln_list(ctx, product, source, cwe, since, sort_order, date_sort,
 def vuln_search(ctx, vendor, product, since, page, per_page):
     """Search vulnerabilities by vendor and product."""
     data = get_client(ctx).search(
-        vendor, product, page=page, per_page=per_page, since=since,
+        vendor,
+        product,
+        page=page,
+        per_page=per_page,
+        since=since,
     )
     output_json(ctx, data)
+
 
 @vuln.command("cpe-search")
 @click.argument("cpe")
 @click.option("--source", default=None, help="Filter by source.")
-@click.option("--sort-order", type=click.Choice(["asc", "desc"]),
-              default=None, help="Sort order.")
+@click.option("--sort-order", type=click.Choice(["asc", "desc"]), default=None, help="Sort order.")
 @click.option("--date-sort", default=None, help="Date field to sort by.")
 @pagination_options
 @click.pass_context
@@ -176,10 +192,15 @@ def vuln_search(ctx, vendor, product, since, page, per_page):
 def vuln_cpe_search(ctx, cpe, source, sort_order, date_sort, page, per_page):
     """Search vulnerabilities by CPE string."""
     data = get_client(ctx).cpe_search(
-        cpe, sort_order=sort_order, date_sort=date_sort,
-        per_page=per_page, page=page, source=source,
+        cpe,
+        sort_order=sort_order,
+        date_sort=date_sort,
+        per_page=per_page,
+        page=page,
+        source=source,
     )
     output_json(ctx, data)
+
 
 @vuln.command("vendors")
 @click.pass_context
@@ -189,6 +210,7 @@ def vuln_vendors(ctx):
     data = get_client(ctx).vendors()
     output_json(ctx, data)
 
+
 @vuln.command("assigners")
 @click.pass_context
 @handle_errors
@@ -197,9 +219,11 @@ def vuln_assigners(ctx):
     data = get_client(ctx).assigners()
     output_json(ctx, data)
 
+
 @cli.group()
 def cwe() -> None:
     """CWE operations."""
+
 
 @cwe.command("get")
 @click.argument("cwe_id")
@@ -209,6 +233,7 @@ def cwe_get(ctx, cwe_id):
     """Get detailed CWE information."""
     data = get_client(ctx).cwe(cwe_id)
     output_json(ctx, data)
+
 
 @cwe.command("list")
 @click.option("--vuln-id", default=None, help="Filter by vulnerability ID.")
@@ -220,9 +245,11 @@ def cwe_list(ctx, vuln_id, page, per_page):
     data = get_client(ctx).cwes(vuln_id=vuln_id, page=page, per_page=per_page)
     output_json(ctx, data)
 
+
 @cli.group()
 def capec() -> None:
     """CAPEC operations."""
+
 
 @capec.command("get")
 @click.argument("capec_id")
@@ -233,6 +260,7 @@ def capec_get(ctx, capec_id):
     data = get_client(ctx).capec(capec_id)
     output_json(ctx, data)
 
+
 @capec.command("list")
 @pagination_options
 @click.pass_context
@@ -242,9 +270,11 @@ def capec_list(ctx, page, per_page):
     data = get_client(ctx).capecs(page=page, per_page=per_page)
     output_json(ctx, data)
 
+
 @cli.group()
 def kev() -> None:
     """KEV (Known Exploited Vulnerabilities) operations."""
+
 
 @kev.command("list")
 @click.option("--exploited", default=None, help="Filter by exploited status.")
@@ -256,15 +286,20 @@ def kev() -> None:
 @pagination_options
 @click.pass_context
 @handle_errors
-def kev_list(ctx, exploited, status_reason, vuln_id, author,
-             date_from, date_to, page, per_page):
+def kev_list(ctx, exploited, status_reason, vuln_id, author, date_from, date_to, page, per_page):
     """List KEV entries."""
     data = get_client(ctx).kevs(
-        exploited=exploited, status_reason=status_reason, vuln_id=vuln_id,
-        author=author, date_from=date_from, date_to=date_to,
-        page=page, per_page=per_page,
+        exploited=exploited,
+        status_reason=status_reason,
+        vuln_id=vuln_id,
+        author=author,
+        date_from=date_from,
+        date_to=date_to,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @kev.command("get")
 @click.argument("uuid")
@@ -275,6 +310,7 @@ def kev_get(ctx, uuid):
     data = get_client(ctx).kev(uuid)
     output_json(ctx, data)
 
+
 @kev.command("cisa")
 @pagination_options
 @click.pass_context
@@ -283,6 +319,7 @@ def kev_cisa(ctx, page, per_page):
     """List CISA Known Exploited Vulnerabilities."""
     data = get_client(ctx).cisa_kev(page=page, per_page=per_page)
     output_json(ctx, data)
+
 
 @kev.command("cnw")
 @pagination_options
@@ -293,13 +330,14 @@ def kev_cnw(ctx, page, per_page):
     data = get_client(ctx).cnw_kev(page=page, per_page=per_page)
     output_json(ctx, data)
 
+
 @cli.group()
 def stats() -> None:
     """Statistics operations."""
 
+
 @stats.command("vuln-count")
-@click.option("--state", type=click.Choice(["published", "reserved"]),
-              default=None, help="Vulnerability state.")
+@click.option("--state", type=click.Choice(["published", "reserved"]), default=None, help="Vulnerability state.")
 @click.option("--period", default=None, help="Time period (e.g. 2024-06).")
 @click.option("--source", default=None, help="Data source.")
 @click.pass_context
@@ -307,9 +345,12 @@ def stats() -> None:
 def stats_vuln_count(ctx, state, period, source):
     """Get published/reserved vulnerability count."""
     data = get_client(ctx).stats_vulnerability_count(
-        state=state, period=period, source=source,
+        state=state,
+        period=period,
+        source=source,
     )
     output_json(ctx, data)
+
 
 @stats.command("most-sighted")
 @click.option("--sighting-type", default=None, help="Sighting type filter.")
@@ -321,10 +362,13 @@ def stats_vuln_count(ctx, state, period, source):
 def stats_most_sighted(ctx, sighting_type, limit, date_from, date_to):
     """Get most sighted vulnerabilities."""
     data = get_client(ctx).stats_most_sighted(
-        sighting_type=sighting_type, limit=limit,
-        date_from=date_from, date_to=date_to,
+        sighting_type=sighting_type,
+        limit=limit,
+        date_from=date_from,
+        date_to=date_to,
     )
     output_json(ctx, data)
+
 
 @stats.command("most-commented")
 @click.option("--limit", type=int, default=None, help="Max results.")
@@ -335,9 +379,12 @@ def stats_most_sighted(ctx, sighting_type, limit, date_from, date_to):
 def stats_most_commented(ctx, limit, date_from, date_to):
     """Get most commented vulnerabilities."""
     data = get_client(ctx).stats_most_commented(
-        limit=limit, date_from=date_from, date_to=date_to,
+        limit=limit,
+        date_from=date_from,
+        date_to=date_to,
     )
     output_json(ctx, data)
+
 
 @stats.command("vendors-ranking")
 @click.option("--limit", type=int, default=None, help="Max results.")
@@ -348,9 +395,12 @@ def stats_most_commented(ctx, limit, date_from, date_to):
 def stats_vendors_ranking(ctx, limit, period, source):
     """Get vendors ranking."""
     data = get_client(ctx).stats_vendors_ranking(
-        limit=limit, period=period, source=source,
+        limit=limit,
+        period=period,
+        source=source,
     )
     output_json(ctx, data)
+
 
 @stats.command("assigners-ranking")
 @click.option("--limit", type=int, default=None, help="Max results.")
@@ -361,9 +411,12 @@ def stats_vendors_ranking(ctx, limit, period, source):
 def stats_assigners_ranking(ctx, limit, period, source):
     """Get assigners ranking."""
     data = get_client(ctx).stats_assigners_ranking(
-        limit=limit, period=period, source=source,
+        limit=limit,
+        period=period,
+        source=source,
     )
     output_json(ctx, data)
+
 
 @stats.command("top-cwes")
 @click.option("--limit", type=int, default=None, help="Max results.")
@@ -375,9 +428,11 @@ def stats_top_cwes(ctx, limit, period):
     data = get_client(ctx).stats_most_used_cwes(limit=limit, period=period)
     output_json(ctx, data)
 
+
 @cli.group()
 def bundle() -> None:
     """Bundle operations."""
+
 
 @bundle.command("get")
 @click.argument("uuid")
@@ -388,6 +443,7 @@ def bundle_get(ctx, uuid):
     data = get_client(ctx).bundle(uuid)
     output_json(ctx, data)
 
+
 @bundle.command("list")
 @click.option("--vuln-id", default=None, help="Filter by vulnerability ID.")
 @click.option("--author", default=None, help="Filter by author.")
@@ -397,13 +453,18 @@ def bundle_get(ctx, uuid):
 def bundle_list(ctx, vuln_id, author, page, per_page):
     """List all bundles."""
     data = get_client(ctx).bundles(
-        vuln_id=vuln_id, author=author, page=page, per_page=per_page,
+        vuln_id=vuln_id,
+        author=author,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @cli.group()
 def comment() -> None:
     """Comment operations."""
+
 
 @comment.command("get")
 @click.argument("uuid")
@@ -414,6 +475,7 @@ def comment_get(ctx, uuid):
     data = get_client(ctx).comment(uuid)
     output_json(ctx, data)
 
+
 @comment.command("list")
 @click.option("--vuln-id", default=None, help="Filter by vulnerability ID.")
 @click.option("--author", default=None, help="Filter by author.")
@@ -423,13 +485,18 @@ def comment_get(ctx, uuid):
 def comment_list(ctx, vuln_id, author, page, per_page):
     """List all comments."""
     data = get_client(ctx).comments(
-        vuln_id=vuln_id, author=author, page=page, per_page=per_page,
+        vuln_id=vuln_id,
+        author=author,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @cli.group()
 def sighting() -> None:
     """Sighting operations."""
+
 
 @sighting.command("get")
 @click.argument("uuid")
@@ -439,6 +506,7 @@ def sighting_get(ctx, uuid):
     """Get a specific sighting."""
     data = get_client(ctx).sighting(uuid)
     output_json(ctx, data)
+
 
 @sighting.command("list")
 @click.option("--type", "sighting_type", default=None, help="Sighting type.")
@@ -450,14 +518,19 @@ def sighting_get(ctx, uuid):
 def sighting_list(ctx, sighting_type, vuln_id, author, page, per_page):
     """List all sightings."""
     data = get_client(ctx).sightings(
-        type=sighting_type, vuln_id=vuln_id, author=author,
-        page=page, per_page=per_page,
+        type=sighting_type,
+        vuln_id=vuln_id,
+        author=author,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @cli.group()
 def emb3d() -> None:
     """MITRE EMB3D adversarial technique operations."""
+
 
 @emb3d.command("get")
 @click.argument("emb3d_id")
@@ -468,6 +541,7 @@ def emb3d_get(ctx, emb3d_id):
     data = get_client(ctx).emb3d(emb3d_id)
     output_json(ctx, data)
 
+
 @emb3d.command("list")
 @click.option("--vuln-id", default=None, help="Filter by vulnerability ID.")
 @pagination_options
@@ -476,13 +550,17 @@ def emb3d_get(ctx, emb3d_id):
 def emb3d_list(ctx, vuln_id, page, per_page):
     """List MITRE EMB3D adversarial techniques."""
     data = get_client(ctx).emb3d_techniques(
-        vuln_id=vuln_id, page=page, per_page=per_page,
+        vuln_id=vuln_id,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @cli.group()
 def gcve() -> None:
     """GCVE registry operations."""
+
 
 @gcve.command("registry")
 @click.option("--short-name", default=None, help="Filter by short name.")
@@ -492,9 +570,12 @@ def gcve() -> None:
 def gcve_registry(ctx, short_name, page, per_page):
     """List GNAs from local GCVE registry."""
     data = get_client(ctx).gcve_registry(
-        short_name=short_name, page=page, per_page=per_page,
+        short_name=short_name,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @gcve.command("integrity")
 @click.pass_context
@@ -504,9 +585,11 @@ def gcve_integrity(ctx):
     data = get_client(ctx).gcve_registry_integrity()
     output_json(ctx, data)
 
+
 @cli.group()
 def organization() -> None:
     """Organization operations."""
+
 
 @organization.command("list")
 @click.option("--name", default=None, help="Filter by name.")
@@ -518,9 +601,11 @@ def organization_list(ctx, name, page, per_page):
     data = get_client(ctx).organizations(name=name, page=page, per_page=per_page)
     output_json(ctx, data)
 
+
 @cli.group()
 def product() -> None:
     """Product operations."""
+
 
 @product.command("list")
 @click.option("--name", default=None, help="Filter by product name.")
@@ -531,10 +616,13 @@ def product() -> None:
 def product_list(ctx, name, organization_name, page, per_page):
     """List all products."""
     data = get_client(ctx).products(
-        name=name, organization_name=organization_name,
-        page=page, per_page=per_page,
+        name=name,
+        organization_name=organization_name,
+        page=page,
+        per_page=per_page,
     )
     output_json(ctx, data)
+
 
 @cli.command()
 @click.argument("description")
@@ -546,9 +634,11 @@ def classify(ctx, description, model):
     data = get_client(ctx).classify_severity(description, model=model)
     output_json(ctx, data)
 
+
 @cli.group()
 def system() -> None:
     """System information."""
+
 
 @system.command("db-info")
 @click.pass_context
@@ -558,6 +648,7 @@ def system_db_info(ctx):
     data = get_client(ctx).db_info()
     output_json(ctx, data)
 
+
 @system.command("config")
 @click.pass_context
 @handle_errors
@@ -565,6 +656,7 @@ def system_config(ctx):
     """Get non-sensitive configuration information."""
     data = get_client(ctx).config_info()
     output_json(ctx, data)
+
 
 @system.command("health")
 @click.pass_context
@@ -574,6 +666,7 @@ def system_health(ctx):
     data = get_client(ctx).check_process()
     output_json(ctx, data)
 
+
 @system.command("pg-info")
 @click.pass_context
 @handle_errors
@@ -581,6 +674,7 @@ def system_pg_info(ctx):
     """Get PostgreSQL database information."""
     data = get_client(ctx).pg_info()
     output_json(ctx, data)
+
 
 @system.command("smtp")
 @click.pass_context
@@ -590,6 +684,7 @@ def system_smtp(ctx):
     data = get_client(ctx).check_smtp()
     output_json(ctx, data)
 
+
 @system.command("valkey")
 @click.pass_context
 @handle_errors
@@ -598,9 +693,11 @@ def system_valkey(ctx):
     data = get_client(ctx).valkey_up()
     output_json(ctx, data)
 
+
 @cli.group()
 def user() -> None:
     """User operations."""
+
 
 @user.command("me")
 @click.pass_context

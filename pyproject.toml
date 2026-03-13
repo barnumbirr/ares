@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ares"
-version = "1.0.2"
+dynamic = ["version"]
 description = "Python wrapper around the Vulnerability-Lookup API (vulnerability.circl.lu)"
 readme = "README.md"
 license = "Apache-2.0"
@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -47,10 +48,21 @@ Repository = "https://github.com/barnumbirr/ares"
 dev = [
     "pytest>=7.0",
     "responses>=0.20",
+    "ruff>=0.9.0",
 ]
 
 [tool.setuptools.packages.find]
 include = ["ares*"]
 
+[tool.setuptools.dynamic]
+version = {attr = "ares.__version__"}
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]

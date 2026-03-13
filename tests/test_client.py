@@ -10,12 +10,12 @@ from requests.exceptions import ConnectionError as RequestsConnectionError
 from requests.exceptions import Timeout as RequestsTimeout
 
 from ares import VulnLookup
-from ares.exceptions import AresError
+from ares.exceptions import AresError, HTTPError
 from ares.exceptions import ConnectionError as AresConnectionError
-from ares.exceptions import HTTPError
 from ares.exceptions import TimeoutError as AresTimeoutError
 
 BASE_URL = "https://vulnerability.circl.lu/api"
+
 
 class TestInit:
     def test_defaults(self):
@@ -47,6 +47,7 @@ class TestInit:
     def test_empty_string_base_url_uses_default(self):
         c = VulnLookup(base_url="")
         assert c.base_url == BASE_URL
+
 
 class TestSession:
     def test_lazy_creation(self):
@@ -80,6 +81,7 @@ class TestSession:
         assert c.session.headers["X-API-KEY"] == ""
         c.close()
 
+
 class TestContextManager:
     def test_closes_session_on_exit(self):
         with VulnLookup() as c:
@@ -96,6 +98,7 @@ class TestContextManager:
         _ = c.session
         c.close()
         c.close()
+
 
 class TestRequest:
     @responses.activate
@@ -140,7 +143,9 @@ class TestRequest:
     @responses.activate
     def test_http_error_preserves_response_body(self, client):
         responses.get(
-            f"{BASE_URL}/browse/", status=422, body="validation failed",
+            f"{BASE_URL}/browse/",
+            status=422,
+            body="validation failed",
         )
         with pytest.raises(HTTPError) as exc_info:
             client.browse()
@@ -172,6 +177,7 @@ class TestRequest:
         client.vulnerabilities()
         assert "?" not in responses.calls[0].request.url
 
+
 class TestExceptions:
     def test_http_error_is_an_ares_error(self):
         with pytest.raises(AresError):
@@ -191,6 +197,7 @@ class TestExceptions:
     def test_timeout_error_is_an_ares_error(self):
         assert issubclass(AresTimeoutError, AresError)
 
+
 ENDPOINTS = [
     # id, method_name, args, kwargs, http_method, path
     ("browse", "browse", (), {}, "GET", "browse/"),
@@ -202,7 +209,14 @@ ENDPOINTS = [
     ("vendors", "vendors", (), {}, "GET", "vulnerability/browse/"),
     ("assigners", "assigners", (), {}, "GET", "vulnerability/browse/assigners"),
     ("search", "search", ("apache", "httpd"), {}, "GET", "vulnerability/search/apache/httpd"),
-    ("cpe_search", "cpe_search", ("cpe:2.3:a:apache:httpd",), {}, "GET", "vulnerability/cpesearch/cpe:2.3:a:apache:httpd"),
+    (
+        "cpe_search",
+        "cpe_search",
+        ("cpe:2.3:a:apache:httpd",),
+        {},
+        "GET",
+        "vulnerability/cpesearch/cpe:2.3:a:apache:httpd",
+    ),
     ("bundles", "bundles", (), {}, "GET", "bundle/"),
     ("bundle", "bundle", ("abc",), {}, "GET", "bundle/abc"),
     ("create_bundle", "create_bundle", ({"name": "x"},), {}, "POST", "bundle/"),
@@ -238,7 +252,14 @@ ENDPOINTS = [
     ("rulezet", "rulezet", ("CVE-2024-1",), {}, "GET", "rulezet/search_rules_by_vulnerabilities/CVE-2024-1"),
     ("users", "users", (), {}, "GET", "user/"),
     ("me", "me", (), {}, "GET", "user/me"),
-    ("create_user", "create_user", (), {"login": "x", "name": "X", "organisation": "O", "email": "e@e.com"}, "POST", "user/"),
+    (
+        "create_user",
+        "create_user",
+        (),
+        {"login": "x", "name": "X", "organisation": "O", "email": "e@e.com"},
+        "POST",
+        "user/",
+    ),
     ("regenerate_api_key", "regenerate_api_key", ({"key": "x"},), {}, "POST", "user/api_key"),
     ("delete_user", "delete_user", (42,), {}, "DELETE", "user/42"),
     ("stats_vulnerability_count", "stats_vulnerability_count", (), {}, "GET", "stats/vulnerability/count"),
@@ -256,6 +277,7 @@ ENDPOINTS = [
     ("valkey_up", "valkey_up", (), {}, "GET", "system/valkey_up"),
 ]
 
+
 class TestEndpointRouting:
     @responses.activate
     @pytest.mark.parametrize(
@@ -264,7 +286,13 @@ class TestEndpointRouting:
         ids=[e[0] for e in ENDPOINTS],
     )
     def test_hits_correct_url_and_method(
-        self, client, method_name, args, kwargs, http_method, path,
+        self,
+        client,
+        method_name,
+        args,
+        kwargs,
+        http_method,
+        path,
     ):
         url = f"{BASE_URL}/{path}"
         responses.add(http_method, url, json={})
@@ -272,6 +300,7 @@ class TestEndpointRouting:
         req = responses.calls[0].request
         assert req.method == http_method
         assert req.url.split("?")[0] == url
+
 
 class TestRequestBodies:
     @responses.activate
@@ -292,8 +321,10 @@ class TestRequestBodies:
     def test_create_user_sends_all_fields(self, client):
         responses.post(f"{BASE_URL}/user/", json={})
         client.create_user(
-            login="jdoe", name="Jane Doe",
-            organisation="ACME", email="jane@example.com",
+            login="jdoe",
+            name="Jane Doe",
+            organisation="ACME",
+            email="jane@example.com",
         )
         body = json.loads(responses.calls[0].request.body)
         assert body == {
@@ -325,20 +356,33 @@ class TestRequestBodies:
         body = json.loads(responses.calls[0].request.body)
         assert body == {"exploited": True}
 
+
 class TestQueryParams:
     @responses.activate
     def test_vulnerabilities_forwards_all_params(self, client):
         responses.get(f"{BASE_URL}/vulnerability/", json=[])
         client.vulnerabilities(
-            product="flask", light="1", cwe="79", since="2024-01-01",
-            sort_order="asc", date_sort="published", per_page=50, page=2,
+            product="flask",
+            light="1",
+            cwe="79",
+            since="2024-01-01",
+            sort_order="asc",
+            date_sort="published",
+            per_page=50,
+            page=2,
             source="cvelistv5",
         )
         url = responses.calls[0].request.url
         for param in [
-            "product=flask", "light=1", "cwe=79", "since=2024-01-01",
-            "sort_order=asc", "date_sort=published", "per_page=50",
-            "page=2", "source=cvelistv5",
+            "product=flask",
+            "light=1",
+            "cwe=79",
+            "since=2024-01-01",
+            "sort_order=asc",
+            "date_sort=published",
+            "per_page=50",
+            "page=2",
+            "source=cvelistv5",
         ]:
             assert param in url, f"{param!r} not in {url}"
 
@@ -347,20 +391,27 @@ class TestQueryParams:
         responses.get(f"{BASE_URL}/vulnerability/CVE-2024-1", json={})
         client.vulnerability(
             "CVE-2024-1",
-            with_meta=True, with_linked=True, with_comments=True,
-            with_bundles=True, with_sightings=True,
+            with_meta=True,
+            with_linked=True,
+            with_comments=True,
+            with_bundles=True,
+            with_sightings=True,
         )
         url = responses.calls[0].request.url
         for flag in [
-            "with_meta", "with_linked", "with_comments",
-            "with_bundles", "with_sightings",
+            "with_meta",
+            "with_linked",
+            "with_comments",
+            "with_bundles",
+            "with_sightings",
         ]:
             assert flag in url, f"{flag!r} not in {url}"
 
     @responses.activate
     def test_search_with_pagination_and_since(self, client):
         responses.get(
-            f"{BASE_URL}/vulnerability/search/apache/httpd", json=[],
+            f"{BASE_URL}/vulnerability/search/apache/httpd",
+            json=[],
         )
         client.search("apache", "httpd", page=3, per_page=20, since="2024-06-01")
         url = responses.calls[0].request.url
@@ -389,8 +440,10 @@ class TestQueryParams:
     def test_kevs_filters(self, client):
         responses.get(f"{BASE_URL}/kev/", json=[])
         client.kevs(
-            exploited=True, status_reason="confirmed",
-            date_from="2024-01-01", date_to="2024-12-31",
+            exploited=True,
+            status_reason="confirmed",
+            date_from="2024-01-01",
+            date_to="2024-12-31",
         )
         url = responses.calls[0].request.url
         assert "exploited=True" in url
@@ -401,12 +454,15 @@ class TestQueryParams:
     def test_stats_vulnerability_count_params(self, client):
         responses.get(f"{BASE_URL}/stats/vulnerability/count", json={})
         client.stats_vulnerability_count(
-            state="published", period="2024-06", source="cvelistv5",
+            state="published",
+            period="2024-06",
+            source="cvelistv5",
         )
         url = responses.calls[0].request.url
         assert "state=published" in url
         assert "period=2024-06" in url
         assert "source=cvelistv5" in url
+
 
 class TestAuthIntegration:
     @responses.activate
@@ -421,6 +477,7 @@ class TestAuthIntegration:
         responses.get(f"{BASE_URL}/browse/", json=[])
         client.browse()
         assert "X-API-KEY" not in responses.calls[0].request.headers
+
 
 class TestSessionLifecycle:
     @responses.activate
@@ -438,6 +495,7 @@ class TestSessionLifecycle:
         assert c._session is not old_session
         c.close()
 
+
 class TestCustomBaseUrl:
     @responses.activate
     def test_custom_base_url_used_in_requests(self):
@@ -447,6 +505,7 @@ class TestCustomBaseUrl:
         assert c.browse() == ["v1"]
         assert responses.calls[0].request.url.startswith(custom)
         c.close()
+
 
 class TestErrorChaining:
     """Verify `raise X from exc` preserves the original exception as __cause__."""
@@ -482,25 +541,34 @@ class TestErrorChaining:
             client.browse()
         assert isinstance(exc_info.value.__cause__, ValueError)
 
+
 class TestPackageAPI:
     def test_version(self):
-        import ares
         from importlib.metadata import version
+
+        import ares
+
         assert ares.__version__ == version("ares")
 
     def test_all_exports(self):
         import ares
+
         assert set(ares.__all__) == {
-            "VulnLookup", "AresError", "ConnectionError",
-            "HTTPError", "TimeoutError",
+            "VulnLookup",
+            "AresError",
+            "ConnectionError",
+            "HTTPError",
+            "TimeoutError",
         }
 
     def test_public_imports(self):
-        from ares import VulnLookup, AresError, ConnectionError, HTTPError, TimeoutError
+        from ares import AresError, ConnectionError, HTTPError, TimeoutError
+
         assert issubclass(HTTPError, AresError)
         assert issubclass(ConnectionError, AresError)
         assert issubclass(TimeoutError, AresError)
         assert issubclass(AresError, Exception)
+
 
 class TestTransport:
     @responses.activate
@@ -546,19 +614,127 @@ class TestTransport:
             client.browse()
         assert len(exc_info.value.message) <= 2000
 
+
+def _get_page(url):
+    """Extract the 'page' query parameter from a URL as an int."""
+    from urllib.parse import parse_qs, urlparse
+
+    qs = parse_qs(urlparse(url).query)
+    return int(qs.get("page", [1])[0])
+
+
+class TestPagination:
+    @responses.activate
+    def test_iter_yields_all_items_across_pages(self, client):
+        """Multiple pages are fetched and yielded in order."""
+
+        def callback(request):
+            page = _get_page(request.url)
+            if page == 2:
+                return (200, {}, json.dumps([{"id": 3}]))
+            return (200, {}, json.dumps([{"id": 1}, {"id": 2}]))
+
+        responses.add_callback(responses.GET, f"{BASE_URL}/vulnerability/", callback=callback)
+        result = list(client.vulnerabilities_iter(per_page=2))
+        assert result == [{"id": 1}, {"id": 2}, {"id": 3}]
+
+    @responses.activate
+    def test_iter_stops_on_empty_first_page(self, client):
+        responses.get(f"{BASE_URL}/vulnerability/", json=[])
+        result = list(client.vulnerabilities_iter(per_page=10))
+        assert result == []
+
+    @responses.activate
+    def test_iter_stops_on_partial_page(self, client):
+        """A page with fewer items than per_page signals the last page."""
+        responses.get(f"{BASE_URL}/vulnerability/", json=[{"id": 1}])
+        result = list(client.vulnerabilities_iter(per_page=10))
+        assert result == [{"id": 1}]
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_iter_stops_on_non_list_response(self, client):
+        """If the API returns a dict instead of a list, stop iterating."""
+        responses.get(f"{BASE_URL}/vulnerability/", json={"error": "bad"})
+        result = list(client.vulnerabilities_iter(per_page=10))
+        assert result == []
+
+    @responses.activate
+    def test_iter_forwards_kwargs(self, client):
+        responses.get(f"{BASE_URL}/vulnerability/", json=[])
+        list(client.vulnerabilities_iter(per_page=5, product="flask", source="cvelistv5"))
+        url = responses.calls[0].request.url
+        assert "product=flask" in url
+        assert "source=cvelistv5" in url
+        assert "per_page=5" in url
+
+    @responses.activate
+    def test_iter_with_positional_args(self, client):
+        """search_iter forwards vendor and product as positional args."""
+
+        def callback(request):
+            page = _get_page(request.url)
+            if page == 2:
+                return (200, {}, json.dumps([]))
+            return (200, {}, json.dumps([{"id": 1}]))
+
+        responses.add_callback(
+            responses.GET,
+            f"{BASE_URL}/vulnerability/search/apache/httpd",
+            callback=callback,
+        )
+        result = list(client.search_iter("apache", "httpd", per_page=10))
+        assert result == [{"id": 1}]
+
+    @responses.activate
+    def test_iter_is_lazy(self, client):
+        """Only the first page should be fetched if we stop iterating early."""
+
+        def callback(request):
+            page = _get_page(request.url)
+            if page == 2:
+                return (200, {}, json.dumps([{"id": 3}, {"id": 4}]))
+            return (200, {}, json.dumps([{"id": 1}, {"id": 2}]))
+
+        responses.add_callback(responses.GET, f"{BASE_URL}/vulnerability/", callback=callback)
+        it = client.vulnerabilities_iter(per_page=2)
+        first = next(it)
+        assert first == {"id": 1}
+        assert len(responses.calls) == 1
+
+    @responses.activate
+    def test_iter_exactly_per_page_fetches_next(self, client):
+        """When a page has exactly per_page items, the next page is fetched."""
+        call_count = 0
+
+        def callback(request):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return (200, {}, json.dumps([{"id": 1}, {"id": 2}]))
+            return (200, {}, json.dumps([]))
+
+        responses.add_callback(responses.GET, f"{BASE_URL}/vulnerability/", callback=callback)
+        result = list(client.vulnerabilities_iter(per_page=2))
+        assert result == [{"id": 1}, {"id": 2}]
+        assert call_count == 2
+
+
 class TestLogging:
     @responses.activate
     def test_debug_logs_request(self, client, caplog):
         import logging
+
         responses.get(f"{BASE_URL}/browse/", json=["vendor1"])
-        with caplog.at_level(logging.DEBUG, logger="ares"):
+        with caplog.at_level(logging.DEBUG, logger="ares.client"):
             client.browse()
         assert any("GET" in m and "browse" in m for m in caplog.messages)
 
     @responses.activate
     def test_debug_logs_response_status(self, client, caplog):
         import logging
+
         responses.get(f"{BASE_URL}/browse/", json=["vendor1"])
-        with caplog.at_level(logging.DEBUG, logger="ares"):
+        with caplog.at_level(logging.DEBUG, logger="ares.client"):
             client.browse()
         assert any("200" in m for m in caplog.messages)
